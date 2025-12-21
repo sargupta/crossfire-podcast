@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Play, Square, Users, Radio, Activity, Volume2, Globe } from 'lucide-react';
+import { Play, Pause, Activity } from 'lucide-react';
 
 // --- Types ---
 interface AgentProfile {
@@ -35,7 +35,7 @@ const AVATAR_MAP: Record<string, string> = {
 
 export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps) {
     const [topic, setTopic] = useState(initialTopic);
-    const [status, setStatus] = useState<string>("Ready to Broadcast");
+    const [status, setStatus] = useState<string>("Ready");
     const [isGenerating, setIsGenerating] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [cast, setCast] = useState<AgentProfile[]>([]);
@@ -46,32 +46,31 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
     const generatePodcast = async () => {
         if (!topic.trim()) return;
         setIsGenerating(true);
-        setStatus("Establishing Uplink...");
+        setStatus("Generating...");
         setCast([]);
         setScript([]);
         setCurrentLineIndex(-1);
 
         try {
-            setStatus("Casting & Producing Entire Episode (Please Wait)...");
             const res = await fetch("http://localhost:8000/api/debate/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ topic, turns: 8 }),
             });
 
-            if (!res.ok) throw new Error("Production Failed");
+            if (!res.ok) throw new Error("Failed to generate");
 
             const data = await res.json();
             setCast(data.cast);
             setScript(data.script);
-            setStatus("Production Complete. Starting Stream...");
+            setStatus("Ready to play");
 
             // Auto-play
-            setTimeout(() => playLine(0, data.script), 1000);
+            setTimeout(() => playLine(0, data.script), 800);
 
         } catch (e) {
             console.error(e);
-            setStatus("Connection Lost.");
+            setStatus("Error occurred");
         } finally {
             setIsGenerating(false);
         }
@@ -80,7 +79,7 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
     const playLine = (index: number, currentScript = script) => {
         if (index >= currentScript.length) {
             setIsPlaying(false);
-            setStatus("Broadcast Ended.");
+            setStatus("Finished");
             return;
         }
 
@@ -88,25 +87,33 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
         setIsPlaying(true);
         const line = currentScript[index];
 
-        setStatus(`Speaking: ${line.name}`);
-
         if (line.audio_url && audioRef.current) {
             audioRef.current.src = line.audio_url;
             audioRef.current.play();
             audioRef.current.onended = () => {
-                setTimeout(() => playLine(index + 1, currentScript), 500);
+                setTimeout(() => playLine(index + 1, currentScript), 400);
             };
             audioRef.current.onerror = () => {
-                console.error("Audio Playback Error", line.audio_url);
+                console.error("Audio error", line.audio_url);
                 playLine(index + 1, currentScript);
             }
         } else {
-            // Fallback or skip if no audio
-            setTimeout(() => playLine(index + 1, currentScript), 2000);
+            setTimeout(() => playLine(index + 1, currentScript), 1800);
         }
     };
 
-    // Helper to get agent image or default
+    const togglePlayback = () => {
+        if (!audioRef.current) return;
+
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            audioRef.current.play();
+            setIsPlaying(true);
+        }
+    };
+
     const getAvatar = (id: string) => {
         const key = id.toLowerCase();
         if (key.includes("sovereignist")) return AVATAR_MAP.sovereignist;
@@ -114,165 +121,213 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
         if (key.includes("technocrat")) return AVATAR_MAP.technocrat;
         if (key.includes("humanist")) return AVATAR_MAP.humanist;
         if (key.includes("shakti")) return AVATAR_MAP.shakti;
-        return "/images/shakti.png"; // Default
+        return "/images/shakti.png";
     };
 
-    // Helper for Glow Colors
-    const getGlowColor = (id: string) => {
-        const key = id.toLowerCase();
-        if (key.includes("sovereignist")) return "shadow-orange-500 border-orange-500";
-        if (key.includes("reformist")) return "shadow-cyan-500 border-cyan-500";
-        if (key.includes("technocrat")) return "shadow-blue-500 border-blue-600";
-        if (key.includes("humanist")) return "shadow-emerald-500 border-emerald-500";
-        if (key.includes("shakti")) return "shadow-purple-500 border-purple-500";
-        return "shadow-white border-white";
-    }
+    const getAgentColor = (id: string) => {
+        if (id.includes("sovereignist")) return "#FB923C"; // orange
+        if (id.includes("reformist")) return "#22D3EE"; // cyan
+        if (id.includes("technocrat")) return "#60A5FA"; // blue
+        if (id.includes("humanist")) return "#34D399"; // emerald
+        if (id.includes("shakti")) return "#C084FC"; // purple
+        return "#9CA3AF"; // gray
+    };
+
+    const host = cast.find(c => c.category_id === 'shakti');
+    const guests = cast.filter(c => c.category_id !== 'shakti');
 
     return (
-        <div className="flex flex-col h-screen bg-black text-white font-sans overflow-hidden relative">
+        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans">
 
-            {/* Immersive Background */}
-            <div className="absolute inset-0 z-0">
-                <img
-                    src="/images/studio_bg.png"
-                    alt="Studio"
-                    className="w-full h-full object-cover opacity-60"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-            </div>
-
-            {/* --- Header --- */}
-            <header className="flex items-center justify-between px-8 py-4 z-50 relative">
-                <div className="flex items-center space-x-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-                    <Globe className="text-red-600 animate-pulse" size={20} />
-                    <h1 className="text-xl font-black tracking-tighter text-white uppercase italic">
-                        CROSSFIRE <span className="text-red-600">PODCAST</span>
-                    </h1>
-                </div>
-
-                <div className="flex items-center space-x-2 max-w-xl w-full mx-auto">
-                    <input
-                        type="text"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                        placeholder="Enter Global Topic..."
-                        className="w-full bg-black/60 backdrop-blur-md border border-white/20 rounded-full py-3 px-6 text-sm focus:outline-none focus:border-blue-500 transition-all text-center tracking-wide shadow-2xl"
-                        onKeyDown={(e) => e.key === 'Enter' && generatePodcast()}
-                    />
-                    <button
-                        onClick={generatePodcast}
-                        disabled={isGenerating}
-                        className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition-all shadow-[0_0_15px_rgba(37,99,235,0.5)] disabled:opacity-50"
-                    >
-                        {isGenerating ? <Activity className="animate-spin" /> : <Play fill="currentColor" />}
-                    </button>
-                </div>
-
-                <div className="w-[150px] text-right">
-                    <span className="text-xs font-mono text-emerald-400 drop-shadow-md">{status}</span>
+            {/* Header */}
+            <header className="border-b border-[var(--bg-tertiary)] backdrop-blur-sm bg-[var(--bg-secondary)]/50">
+                <div className="max-w-7xl mx-auto px-6 py-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight font-[var(--font-sora,sans-serif)]">
+                                CROSSFIRE
+                            </h1>
+                            <p className="text-sm text-[var(--text-tertiary)] mt-1">
+                                AI-Powered Multi-Agent Debates
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            {/* --- Main Visual Stage --- */}
-            <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-4">
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
 
-                {/* Host (Center) */}
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
-                    {cast.find(c => c.category_id === 'shakti') && (
-                        <AgentVisual
-                            agent={cast.find(c => c.category_id === 'shakti')!}
-                            isSpeaking={script[currentLineIndex]?.speaker === 'shakti' && isPlaying}
-                            isHost={true}
-                        />
-                    )}
-                </div>
-
-                {/* Guests (Grid) */}
-                {cast.length > 0 ? (
-                    <div className="grid grid-cols-4 gap-8 w-full max-w-6xl mb-24">
-                        {cast.filter(c => c.category_id !== 'shakti').map((agent) => (
-                            <div key={agent.category_id} className="flex justify-center">
-                                <AgentVisual
-                                    agent={agent}
-                                    isSpeaking={script[currentLineIndex]?.speaker === agent.category_id && isPlaying}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-white/30 text-2xl font-thin tracking-[1em] uppercase animate-pulse">
-                        Studio Offline
-                    </div>
-                )}
-
-            </main>
-
-            {/* --- Dynamic Transcript Overlay --- */}
-            <AnimatePresence>
-                {script[currentLineIndex] && (
+                {/* Topic Input Section */}
+                {!cast.length && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="absolute bottom-32 left-1/2 -translate-x-1/2 w-full max-w-3xl z-50 text-center"
+                        className="w-full max-w-2xl"
                     >
-                        <div className="bg-black/70 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl">
-                            <h3 className={`text-sm font-bold uppercase tracking-widest mb-2 ${getAgentColorText(script[currentLineIndex].speaker)}`}>
-                                {script[currentLineIndex].name}
-                            </h3>
-                            <p className="text-xl md:text-2xl font-light leading-relaxed text-white drop-shadow-lg">
-                                "{script[currentLineIndex].text}"
-                            </p>
+                        <div className="bg-[var(--bg-secondary)] rounded-2xl p-8 shadow-2xl border border-[var(--bg-tertiary)]">
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
+                                What should we debate today?
+                            </label>
+                            <input
+                                type="text"
+                                value={topic}
+                                onChange={(e) => setTopic(e.target.value)}
+                                placeholder="Enter a debate topic..."
+                                className="w-full bg-[var(--bg-tertiary)] border border-[var(--accent-muted)]/20 rounded-xl  px-6 py-4 text-lg focus:outline-none focus:border-[var(--accent-primary)] transition-colors placeholder:text-[var(--text-tertiary)]"
+                                onKeyDown={(e) => e.key === 'Enter' && generatePodcast()}
+                                disabled={isGenerating}
+                            />
+                            <button
+                                onClick={generatePodcast}
+                                disabled={isGenerating || !topic.trim()}
+                                className="mt-4 w-full bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+                            >
+                                {isGenerating ? (
+                                    <>
+                                        <Activity className="w-5 h-5 animate-spin" />
+                                        Generating Debate...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play className="w-5 h-5" fill="currentColor" />
+                                        Generate Podcast
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+
+                {/* Agents Display */}
+                {cast.length > 0 && (
+                    <div className="w-full max-w-6xl">
+                        {/* Host */}
+                        {host && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex justify-center mb-12"
+                            >
+                                <AgentCard
+                                    agent={host}
+                                    isSpeaking={script[currentLineIndex]?.speaker === 'shakti' && isPlaying}
+                                    getAvatar={getAvatar}
+                                    getColor={getAgentColor}
+                                    size="large"
+                                />
+                            </motion.div>
+                        )}
+
+                        {/* Guests Grid */}
+                        <motion.div
+                            className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            {guests.map((agent, idx) => (
+                                <AgentCard
+                                    key={agent.category_id}
+                                    agent={agent}
+                                    isSpeaking={script[currentLineIndex]?.speaker === agent.category_id && isPlaying}
+                                    getAvatar={getAvatar}
+                                    getColor={getAgentColor}
+                                    size="medium"
+                                />
+                            ))}
+                        </motion.div>
+
+                        {/* Playback Controls */}
+                        {script.length > 0 && (
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={togglePlayback}
+                                    className="bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--accent-muted)]/20 rounded-full p-4 transition-all duration-200"
+                                >
+                                    {isPlaying ? (
+                                        <Pause className="w-6 h-6" />
+                                    ) : (
+                                        <Play className="w-6 h-6" fill="currentColor" />
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Transcript Overlay */}
+                <AnimatePresence>
+                    {script[currentLineIndex] && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-6"
+                        >
+                            <div className="bg-[var(--bg-secondary)]/95 backdrop-blur-xl border border-[var(--bg-tertiary)] rounded-2xl p-6 shadow-2xl">
+                                <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: getAgentColor(script[currentLineIndex].speaker) }}>
+                                    {script[currentLineIndex].name}
+                                </p>
+                                <p className="text-lg leading-relaxed text-[var(--text-primary)]">
+                                    "{script[currentLineIndex].text}"
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </main>
 
             <audio ref={audioRef} className="hidden" />
         </div>
     );
+}
 
-    function AgentVisual({ agent, isSpeaking, isHost = false }: { agent: AgentProfile, isSpeaking: boolean, isHost?: boolean }) {
-        const glow = getGlowColor(agent.category_id);
+// --- Agent Card Component ---
+function AgentCard({
+    agent,
+    isSpeaking,
+    getAvatar,
+    getColor,
+    size = "medium"
+}: {
+    agent: AgentProfile;
+    isSpeaking: boolean;
+    getAvatar: (id: string) => string;
+    getColor: (id: string) => string;
+    size?: "medium" | "large";
+}) {
+    const sizeClasses = size === "large" ? "w-40 h-40" : "w-28 h-28";
+    const color = getColor(agent.category_id);
 
-        return (
-            <motion.div
-                animate={{
-                    scale: isSpeaking ? 1.1 : 1,
-                    y: isSpeaking ? -10 : 0
+    return (
+        <motion.div
+            animate={{
+                scale: isSpeaking ? 1.05 : 1,
+            }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex flex-col items-center group"
+        >
+            <div
+                className={`${sizeClasses} rounded-full overflow-hidden transition-all duration-300 ${isSpeaking
+                        ? 'ring-4 ring-offset-4 ring-offset-[var(--bg-primary)]'
+                        : 'opacity-60 grayscale'
+                    }`}
+                style={{
+                    ringColor: isSpeaking ? color : 'transparent',
                 }}
-                className={`relative flex flex-col items-center group transition-all duration-500`}
             >
-                <div className={`
-                  relative rounded-2xl overflow-hidden border-2 transition-all duration-300
-                  ${isHost ? 'w-48 h-48 md:w-64 md:h-64' : 'w-32 h-32 md:w-40 md:h-40'}
-                  ${isSpeaking ? `border-opacity-100 shadow-[0_0_50px_rgba(var(--tw-shadow-color),0.8)] ${glow}` : 'border-white/20 grayscale opacity-70'}
-              `}>
-                    <img
-                        src={getAvatar(agent.category_id)}
-                        alt={agent.name}
-                        className="w-full h-full object-cover"
-                    />
-                    {/* Overlay for Info */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                        <p className="text-[10px] uppercase font-bold text-white">{agent.sub_role}</p>
-                    </div>
-                </div>
-
-                {/* Name Tag */}
-                <div className={`mt-3 px-4 py-1 rounded-full bg-black/80 backdrop-blur border border-white/10 ${isSpeaking ? 'opacity-100' : 'opacity-50'}`}>
-                    <span className="text-xs font-bold uppercase tracking-wider">{agent.name}</span>
-                </div>
-            </motion.div>
-        )
-    }
-
-    function getAgentColorText(id: string) {
-        if (id.includes("sovereignist")) return "text-orange-400";
-        if (id.includes("reformist")) return "text-cyan-400";
-        if (id.includes("technocrat")) return "text-blue-400";
-        if (id.includes("humanist")) return "text-emerald-400";
-        if (id.includes("shakti")) return "text-purple-400";
-        return "text-gray-400";
-    }
+                <img
+                    src={getAvatar(agent.category_id)}
+                    alt={agent.name}
+                    className="w-full h-full object-cover"
+                />
+            </div>
+            <div className={`mt-3 text-center transition-opacity duration-300 ${isSpeaking ? 'opacity-100' : 'opacity-50'}`}>
+                <p className="text-sm font-medium">{agent.name}</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{agent.sub_role}</p>
+            </div>
+        </motion.div>
+    );
 }
