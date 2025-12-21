@@ -1,0 +1,99 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.6.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.5.1
+2 info using node@v24.6.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/sargupta/AIPodcast/.npmrc
+5 silly config load:file:/Users/sargupta/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm install ai@3.4.33 @ai-sdk/google@0.0.55 zod@3.23.8
+8 verbose argv "install" "ai@3.4.33" "@ai-sdk/google@0.0.55" "zod@3.23.8"
+9 verbose logfile logs-max:10 dir:/Users/sargupta/AIPodcast/.npm-cache/_logs/2025-12-21T09_11_46_952Z-
+10 verbose logfile /Users/sargupta/AIPodcast/.npm-cache/_logs/2025-12-21T09_11_46_952Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest @ai-sdk/google@0.0.55
+15 silly packumentCache full:https://registry.npmjs.org/@ai-sdk%2fgoogle cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/@ai-sdk%2fgoogle 1514ms (cache revalidated)
+17 silly packumentCache full:https://registry.npmjs.org/@ai-sdk%2fgoogle set size:956042 disposed:false
+18 silly fetch manifest zod@3.23.8
+19 silly packumentCache full:https://registry.npmjs.org/zod cache-miss
+20 http cache https://registry.npmjs.org/zod 7ms (cache hit)
+21 silly packumentCache full:https://registry.npmjs.org/zod set size:3295165 disposed:false
+22 silly fetch manifest ai@3.4.33
+23 silly packumentCache full:https://registry.npmjs.org/ai cache-miss
+24 http cache https://registry.npmjs.org/ai 5ms (cache hit)
+25 silly packumentCache full:https://registry.npmjs.org/ai set size:3458379 disposed:false
+26 silly fetch manifest openai@^4.42.0
+27 silly packumentCache full:https://registry.npmjs.org/openai cache-miss
+28 http cache https://registry.npmjs.org/openai 8ms (cache hit)
+29 silly packumentCache full:https://registry.npmjs.org/openai set size:4581249 disposed:false
+30 silly fetch manifest ws@^8.18.0
+31 silly packumentCache full:https://registry.npmjs.org/ws cache-miss
+32 http cache https://registry.npmjs.org/ws 4ms (cache hit)
+33 silly packumentCache full:https://registry.npmjs.org/ws set size:410901 disposed:false
+34 silly fetch manifest bufferutil@^4.0.1
+35 silly packumentCache full:https://registry.npmjs.org/bufferutil cache-miss
+36 http cache https://registry.npmjs.org/bufferutil 0ms (cache hit)
+37 silly packumentCache full:https://registry.npmjs.org/bufferutil set size:52763 disposed:false
+38 silly fetch manifest utf-8-validate@>=5.0.2
+39 silly packumentCache full:https://registry.npmjs.org/utf-8-validate cache-miss
+40 http cache https://registry.npmjs.org/utf-8-validate 1ms (cache hit)
+41 silly packumentCache full:https://registry.npmjs.org/utf-8-validate set size:77148 disposed:false
+42 silly fetch manifest react@19.2.3
+43 silly packumentCache full:https://registry.npmjs.org/react cache-miss
+44 http cache https://registry.npmjs.org/react 6ms (cache hit)
+45 silly packumentCache full:https://registry.npmjs.org/react set size:6362607 disposed:false
+46 silly fetch manifest sswr@^2.1.0
+47 silly packumentCache full:https://registry.npmjs.org/sswr cache-miss
+48 http cache https://registry.npmjs.org/sswr 2ms (cache hit)
+49 silly packumentCache full:https://registry.npmjs.org/sswr set size:66421 disposed:false
+50 silly fetch manifest svelte@^4.0.0 || ^5.0.0
+51 silly packumentCache full:https://registry.npmjs.org/svelte cache-miss
+52 http cache https://registry.npmjs.org/svelte 7ms (cache hit)
+53 silly packumentCache full:https://registry.npmjs.org/svelte set size:4431812 disposed:false
+54 verbose stack Error: could not resolve
+54 verbose stack     at PlaceDep.failPeerConflict (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/place-dep.js:503:25)
+54 verbose stack     at new PlaceDep (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/place-dep.js:157:21)
+54 verbose stack     at #buildDepStep (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:933:18)
+54 verbose stack     at async Arborist.buildIdealTree (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:182:7)
+54 verbose stack     at async Promise.all (index 1)
+54 verbose stack     at async Arborist.reify (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:126:5)
+54 verbose stack     at async Install.exec (/opt/homebrew/lib/node_modules/npm/lib/commands/install.js:150:5)
+54 verbose stack     at async Npm.exec (/opt/homebrew/lib/node_modules/npm/lib/npm.js:208:9)
+54 verbose stack     at async module.exports (/opt/homebrew/lib/node_modules/npm/lib/cli/entry.js:67:5)
+55 error code ERESOLVE
+56 error ERESOLVE could not resolve
+57 error
+58 error While resolving: omni-cast@0.1.0
+58 error Found: @ai-sdk/google@2.0.51[2m[22m
+58 error [2mnode_modules/@ai-sdk/google[22m
+58 error   @ai-sdk/google@"0.0.55" from the root project
+58 error
+58 error Could not resolve dependency:
+58 error @ai-sdk/google@"0.0.55" from the root project
+58 error
+58 error Conflicting peer dependency: zod@3.23.8[2m[22m
+58 error [2mnode_modules/zod[22m
+58 error   [95mpeer[39m zod@"^3.0.0" from @ai-sdk/google@0.0.55[2m[22m
+58 error   [2mnode_modules/@ai-sdk/google[22m
+58 error     @ai-sdk/google@"0.0.55" from the root project
+58 error
+58 error Fix the upstream dependency conflict, or retry
+58 error this command with --force or --legacy-peer-deps
+58 error to accept an incorrect (and potentially broken) dependency resolution.
+59 error
+59 error
+59 error For a full report see:
+59 error /Users/sargupta/AIPodcast/.npm-cache/_logs/2025-12-21T09_11_46_952Z-eresolve-report.txt
+60 silly unfinished npm timer reify 1766308307033
+61 silly unfinished npm timer reify:loadTrees 1766308307034
+62 silly unfinished npm timer idealTree:buildDeps 1766308307092
+63 silly unfinished npm timer idealTree:#root 1766308307092
+64 verbose cwd /Users/sargupta/AIPodcast
+65 verbose os Darwin 25.2.0
+66 verbose node v24.6.0
+67 verbose npm  v11.5.1
+68 verbose exit 1
+69 verbose code 1
+70 error A complete log of this run can be found in: /Users/sargupta/AIPodcast/.npm-cache/_logs/2025-12-21T09_11_46_952Z-debug-0.log

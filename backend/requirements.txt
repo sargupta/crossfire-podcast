@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-dotenv
+google-adk
+google-cloud-texttospeech
+google-cloud-speech
+google-cloud-aiplatform
+google-cloud-storage

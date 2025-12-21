@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: radial-gradient(circle at center, #1e1e2e 0%, #000000 100%);
+  background-attachment: fixed;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  /* Prevent scroll on the studio app */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar for chat logs */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
