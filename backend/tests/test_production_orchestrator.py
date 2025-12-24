@@ -4,7 +4,6 @@ Tests all production modules working together
 """
 
 import pytest
-import asyncio
 from production_orchestrator import ProductionADKOrchestrator
 
 

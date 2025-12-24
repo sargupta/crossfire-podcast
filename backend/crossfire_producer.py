@@ -13,7 +13,7 @@ import asyncio
 import datetime
 import pathlib
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
+
 from pydantic import BaseModel, Field
 
 
@@ -120,7 +120,7 @@ class CrossfirePodcastProducer:
         # Step 6: Generate audio (via specialist agent)
         if generate_audio:
             try:
-                audio_script = self._create_podcast_script()
+                # self._create_podcast_script()
                 # TODO: Call audio_generator agent here
                 # audio_result = await audio_generator.run(audio_script)
                 print("✅ Audio script prepared for generation")

@@ -9,6 +9,8 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
     "/Users/sargupta/AIPodcast/service-account-key.json"
 )
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "adk_agents"))  # noqa: E402
+
 from google.adk.agents.llm_agent import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService

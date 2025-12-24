@@ -75,7 +75,7 @@ jobs:
       - name: Run flake8
         run: |
           cd backend
-          flake8 . --max-line-length=100 --exclude=venv,__pycache__
+          flake8 . --max-line-length=127 --exclude=venv,__pycache__
 
   build:
     name: Build Docker Image

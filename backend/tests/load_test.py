@@ -75,13 +75,13 @@ class LoadTester:
         if total_debates is None:
             total_debates = concurrent_debates
 
-        print(f"=" * 70)
-        print(f"CROSSFIRE LOAD TEST")
-        print(f"=" * 70)
+        print("=" * 70)
+        print("CROSSFIRE LOAD TEST")
+        print("=" * 70)
         print(f"Concurrent Debates: {concurrent_debates}")
         print(f"Total Debates: {total_debates}")
         print(f"Target: {self.base_url}")
-        print(f"=" * 70)
+        print("=" * 70)
         print()
 
         overall_start = time.time()
@@ -119,7 +119,7 @@ class LoadTester:
         print("LOAD TEST RESULTS")
         print("=" * 70)
 
-        print(f"\n📊 Overall Stats:")
+        print("\n📊 Overall Stats:")
         print(f"  Total Debates: {len(self.results)}")
         print(
             f"  Successful: {len(successful)} ({len(successful)/len(self.results)*100:.1f}%)"
@@ -132,7 +132,7 @@ class LoadTester:
             durations = [r["duration"] for r in successful]
             events = [r["events_received"] for r in successful]
 
-            print(f"\n⏱️  Performance Metrics:")
+            print("\n⏱️  Performance Metrics:")
             print(f"  Average Duration: {statistics.mean(durations):.2f}s")
             print(f"  Median Duration: {statistics.median(durations):.2f}s")
             print(f"  Min Duration: {min(durations):.2f}s")
@@ -140,7 +140,7 @@ class LoadTester:
             print(f"  Average Events/Debate: {statistics.mean(events):.1f}")
 
         if failed:
-            print(f"\n❌ Failures:")
+            print("\n❌ Failures:")
             error_counts = {}
             for r in failed:
                 error = r["error"] or "Unknown"

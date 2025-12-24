@@ -4,7 +4,6 @@ Tests the complete debate generation pipeline
 """
 
 import pytest
-import asyncio
 from pathlib import Path
 import sys
 

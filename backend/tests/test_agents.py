@@ -10,8 +10,6 @@ from pathlib import Path
 # Add agents to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "adk_agents"))
 
-from google.adk.agents.llm_agent import Agent
-
 
 class TestAgentCreation:
     """Test that all agents can be created successfully"""

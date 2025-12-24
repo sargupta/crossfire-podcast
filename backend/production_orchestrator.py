@@ -4,9 +4,9 @@ Integrates all production modules: sessions, quality, observability
 """
 
 import asyncio
-from typing import AsyncGenerator, Dict, List, Optional
+
+from typing import AsyncGenerator, Dict, Optional
 from datetime import datetime
-import uuid
 
 from managed_session_service import ManagedSessionService, DebateContext
 from quality_evaluator import DebateQualityEvaluator, SafetyFilter
@@ -136,6 +136,7 @@ class ProductionADKOrchestrator:
                 for turn in range(1, turns + 1):
                     debater_id, debater_agent = debaters[(turn - 1) % len(debaters)]
 
+
                     yield await self._generate_turn(
                         debater_id, debater_agent, turn, session_id
                     )
@@ -217,10 +218,9 @@ class ProductionADKOrchestrator:
         ):
             turn_start = datetime.now()
 
-            # Get conversation history from session
-            history = self.session_service.format_history_for_prompt(
-                session_id, last_n=3
-            )
+            # history = self.session_service.format_history_for_prompt(
+            #     session_id, last_n=3
+            # )
 
             # Generate response (simulated for now)
             await asyncio.sleep(0.3)

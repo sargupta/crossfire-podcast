@@ -5,8 +5,6 @@ Tests WebSocket and HTTP endpoints
 
 import pytest
 from fastapi.testclient import TestClient
-from fastapi import WebSocket
-import json
 import sys
 from pathlib import Path
 

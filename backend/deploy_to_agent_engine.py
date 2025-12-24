@@ -3,10 +3,9 @@ Agent Engine Deployment Script
 Deploys CROSSFIRE agents to GCP Agent Engine with managed runtime
 """
 
-import os
 from pathlib import Path
 from google.cloud import aiplatform
-from typing import Dict, List
+from typing import Dict
 import json
 
 # Project configuration
