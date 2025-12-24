@@ -1,0 +1,26 @@
+[flake8]
+max-line-length = 127
+exclude = 
+    venv,
+    __pycache__,
+    .pytest_cache,
+    htmlcov,
+    .git,
+    build,
+    dist,
+    *.egg-info
+
+# Ignore specific errors:
+# E402 - module level import not at top of file (needed for sys.path)
+# E501 - line too long (some long strings are acceptable)
+# E226 - missing whitespace around arithmetic operator
+# W503 - line break before binary operator
+# W291 - trailing whitespace (black handles this)
+# W293 - blank line contains whitespace (black handles this)
+# F541 - f-string is missing placeholders (sometimes intentional)
+ignore = E402,E501,E226,W503,W291,W293,F541
+
+per-file-ignores =
+    __init__.py:F401
+    tests/*.py:E402
+    manual_test_*.py:F821,E402

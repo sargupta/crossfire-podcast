@@ -1,52 +1,84 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+htmlcov/
+coverage.json
+coverage.xml
+.env
+venv/
+env/
+
+# Dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
+.yarn/install-state.gz
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
 
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
+# Local env files
+.env*.local
+.env.production
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# npm cache
+.npm-cache/
+
+# Temporary files
+*.log
+*.tmp
+sessions/
+deployment_manifest.json
+crossfire_*_2025-*.md
+
+# Student data (project-specific)
+NU_Student_Data.ts
+NU_Student_Data.xlsx
+excel_to_json.py
+excel_to_ts.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
 
 # ===== BACKEND SECURITY =====
 # Python virtual environment
 backend/venv/
 backend/__pycache__/
 **/__pycache__/
-*.pyc
 *.pyo
 *.pyd
 .Python
