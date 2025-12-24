@@ -189,8 +189,10 @@ jobs:
             --tag production
 
       - name: Create git tag
+        id: create_tag
         run: |
           VERSION=$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
           git tag $VERSION
           git push origin $VERSION
 
@@ -199,14 +201,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: CROSSFIRE ${{ github.ref }}
+          tag_name: ${{ env.VERSION }}
+          release_name: CROSSFIRE ${{ env.VERSION }}
           body: |
             Production deployment of CROSSFIRE
 
             ## Metrics
             - Tests: 26+ passing
-            - Coverage: 55%
+            - Coverage: 58%
             - Quality: Coherence 0.96, Safety 0.92
           draft: false
           prerelease: false
