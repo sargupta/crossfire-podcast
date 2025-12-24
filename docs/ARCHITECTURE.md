@@ -2,6 +2,8 @@
 
 ## System Overview
 
+![CROSSFIRE Architecture Diagram](images/architecture_diagram.png)
+
 CROSSFIRE is a production-grade AI-powered debate platform built on Google's Agent Development Kit (ADK), featuring real-time streaming, quality evaluation, and comprehensive observability.
 
 ---
