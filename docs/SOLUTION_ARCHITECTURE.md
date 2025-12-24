@@ -2,6 +2,8 @@
 
 ## Enterprise Solution Diagram
 
+![CROSSFIRE Solution Architecture](images/solution_architecture.png)
+
 This diagram represents the complete **Solution Architecture** for the CROSSFIRE platform, designed following **Google Cloud Architecture Framework** principles.
 
 ```mermaid
