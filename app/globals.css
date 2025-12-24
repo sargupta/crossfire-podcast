@@ -2,35 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #000000;
-  --foreground: #ffffff;
+@layer base {
+  :root {
+    /* --- Vibrant Electric Color Palette --- */
+    /* Neon Accents */
+    --electric-pink: #FF006E;
+    --neon-cyan: #00F5FF;
+    --vibrant-orange: #FF6B35;
+    --lime-green: #39FF14;
+    --hot-magenta: #FF10F0;
+    --gold-yellow: #FFD60A;
+
+    /* Agent Colors (Vivid) */
+    --sovereignist: #FF6B35;
+    --reformist: #00F5FF;
+    --technocrat: #4CC9F0;
+    --humanist: #39FF14;
+    --shakti: #FF10F0;
+
+    /* Backgrounds */
+    --bg-dark: #0a0a0f;
+    --bg-card: #1a1a2e;
+  }
 }
 
 body {
-  color: var(--foreground);
-  background: radial-gradient(circle at center, #1e1e2e 0%, #000000 100%);
-  background-attachment: fixed;
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
-  overflow: hidden;
-  /* Prevent scroll on the studio app */
+  background: #0a0a0f;
+  color: white;
+  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar for chat logs */
+/* Animated Gradient Background */
+@keyframes gradient-shift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Glow Pulse Animation */
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    filter: blur(20px);
+  }
+
+  50% {
+    opacity: 0.7;
+    filter: blur(30px);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Waveform Animation */
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-wave {
+  animation: wave 0.6s ease-in-out infinite;
+}
+
+/* Progress Bar Animation */
+@keyframes progress {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  100% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+.animate-progress {
+  animation: progress 3s linear;
+}
+
+/* Floating Animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbar - Neon */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #1a1a2e;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 3px;
+  background: linear-gradient(135deg, #FF006E, #00F5FF);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: linear-gradient(135deg, #FF10F0, #39FF14);
+}
+
+/* Focus States - Neon Glow */
+*:focus-visible {
+  outline: 2px solid var(--electric-pink);
+  outline-offset: 3px;
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+}
+
+/* Utility Classes */
+.text-glow-pink {
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.8),
+    0 0 40px rgba(255, 0, 110, 0.4);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 20px rgba(0, 245, 255, 0.8),
+    0 0 40px rgba(0, 245, 255, 0.4);
+}
+
+.neon-border-pink {
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.5),
+    inset 0 0 20px rgba(255, 0, 110, 0.1);
+}
+
+.neon-border-cyan {
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.5),
+    inset 0 0 20px rgba(0, 245, 255, 0.1);
 }
