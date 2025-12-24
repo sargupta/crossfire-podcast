@@ -11,6 +11,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import app
+from unittest.mock import patch, MagicMock
+import main
+
+@pytest.fixture(autouse=True)
+def mock_orchestrator():
+    """Mock the orchestrator to prevent real backend calls"""
+    mock_orch = MagicMock()
+    mock_orch.generate_debate.return_value = "Mock Script"
+    
+    # We must patch the global 'orchestrator' in the main module
+    original_orch = main.orchestrator
+    main.orchestrator = mock_orch
+    yield
+    main.orchestrator = original_orch
 
 
 @pytest.fixture

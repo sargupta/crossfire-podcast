@@ -136,7 +136,6 @@ class ProductionADKOrchestrator:
                 for turn in range(1, turns + 1):
                     debater_id, debater_agent = debaters[(turn - 1) % len(debaters)]
 
-
                     yield await self._generate_turn(
                         debater_id, debater_agent, turn, session_id
                     )

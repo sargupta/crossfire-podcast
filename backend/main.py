@@ -119,7 +119,9 @@ async def adk_debate_stream(websocket: WebSocket):
         async for event in adk_orchestrator.generate_debate_stream(topic, turns):
             # Send event to client
             await websocket.send_json(event)
-            print("Streaming ended naturally.") # The original line was `print(f"[ADK Stream] Sent {event['type']} turn {event['turn']}")`. The instruction was to remove 'f' prefix from empty f-strings, but the provided `Code Edit` example introduced a new string and a syntax error. Assuming the intent was to replace the original print statement with the new string, and correcting the syntax error in the provided example.
+            print(
+                "Streaming ended naturally."
+            )  # The original line was `print(f"[ADK Stream] Sent {event['type']} turn {event['turn']}")`. The instruction was to remove 'f' prefix from empty f-strings, but the provided `Code Edit` example introduced a new string and a syntax error. Assuming the intent was to replace the original print statement with the new string, and correcting the syntax error in the provided example.
             # The instruction "Remove 'f' prefix from empty f-strings" does not apply here as there are no empty f-strings.
             # The provided `Code Edit` example was syntactically incorrect.
             # To make a valid change based on the `Code Edit` example, and assuming it was meant to replace the original print statement,
