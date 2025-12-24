@@ -1,7 +1,7 @@
 from typing import List, Dict
 import os
 import time
-from .agents.manifests import AGENT_MANIFESTS
+from agents.manifests import AGENT_MANIFESTS
 import vertexai
 from vertexai.generative_models import GenerativeModel, ChatSession
 
