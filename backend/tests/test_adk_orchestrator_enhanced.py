@@ -4,11 +4,9 @@ Tests transcript generation, file output, and streaming functionality
 """
 
 import pytest
-import asyncio
 from pathlib import Path
 import sys
 from datetime import datetime
-from unittest.mock import Mock, patch, AsyncMock
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

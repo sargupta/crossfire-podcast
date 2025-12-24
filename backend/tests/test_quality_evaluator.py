@@ -4,7 +4,6 @@ Tests quality scoring, safety filtering, and trajectory analysis
 """
 
 import pytest
-import asyncio
 from pathlib import Path
 import sys
 

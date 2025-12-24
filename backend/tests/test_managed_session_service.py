@@ -4,7 +4,6 @@ Tests session creation, context management, and archival
 """
 
 import pytest
-import asyncio
 from pathlib import Path
 import sys
 import json
