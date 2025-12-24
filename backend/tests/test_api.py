@@ -1,6 +1,7 @@
 """
-API Integration Tests for FastAPI Endpoints
-Tests WebSocket and HTTP endpoints
+API Integration Tests for FastAPI Endpoints.
+
+Tests WebSocket and HTTP endpoints and verifies robust startup behavior.
 """
 
 import sys
@@ -18,29 +19,73 @@ from main import app  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
-def mock_orchestrator():
-    """Mock the orchestrator to prevent real backend calls"""
+def mock_services():
+    """Mock all backend services to prevent real API calls."""
+    # 1. Mock PodcastOrchestrator
     mock_orch = MagicMock()
     mock_orch.generate_debate.return_value = "Mock Script"
 
-    # We must patch the global 'orchestrator' in the main module
-    original_orch = main.orchestrator
+    # 2. Mock ADKDebateOrchestrator (Async Generator)
+    mock_adk = MagicMock()
+
+    async def mock_debate_stream(*args, **kwargs):
+        yield {"type": "intro", "text": "Welcome to Crossfire!"}
+        yield {
+            "type": "turn",
+            "agent_name": "Sovereignist",
+            "text": "Tradition matters!",
+        }
+        yield {"type": "turn", "agent_name": "Reformist", "text": "Change is good!"}
+        yield {"type": "conclusion", "text": "What a debate!"}
+
+    mock_adk.generate_debate_stream = mock_debate_stream
+
+    # 3. Mock ProductionADKOrchestrator
+    mock_prod = MagicMock()
+    mock_prod.generate_debate_stream = mock_debate_stream
+    mock_prod.observability.metrics.get_metrics_summary.return_value = {
+        "total_debates": 10,
+        "success_rate": 0.95,
+    }
+
+    # 4. Mock TTS Client
+    mock_tts = MagicMock()
+    mock_response = MagicMock()
+    mock_response.audio_content = b"fake_audio_bytes"
+    mock_tts.synthesize_speech.return_value = mock_response
+
+    # Patch all globals
+    # We save originals to restore them (though Pytest isolation usually handles this)
+    orig_orch = main.orchestrator
+    orig_adk = main.adk_orchestrator
+    orig_prod = main.production_orch
+    orig_tts = main.tts_client
+
     main.orchestrator = mock_orch
+    main.adk_orchestrator = mock_adk
+    main.production_orch = mock_prod
+    main.tts_client = mock_tts
+
     yield
-    main.orchestrator = original_orch
+
+    # Restore
+    main.orchestrator = orig_orch
+    main.adk_orchestrator = orig_adk
+    main.production_orch = orig_prod
+    main.tts_client = orig_tts
 
 
 @pytest.fixture
 def client():
-    """Create test client"""
+    """Create test client."""
     return TestClient(app)
 
 
 class TestHTTPEndpoints:
-    """Test REST API endpoints"""
+    """Test REST API endpoints."""
 
     def test_root_endpoint(self, client):
-        """Test root endpoint returns status"""
+        """Test root endpoint returns status."""
         response = client.get("/")
 
         assert response.status_code == 200
@@ -49,7 +94,7 @@ class TestHTTPEndpoints:
         assert "Operational" in data["status"]
 
     def test_generate_debate_endpoint(self, client):
-        """Test POST /api/debate/generate"""
+        """Test POST /api/debate/generate."""
         response = client.post(
             "/api/debate/generate", json={"topic": "Test Topic", "turns": 2}
         )
@@ -59,7 +104,7 @@ class TestHTTPEndpoints:
         assert "script" in data
 
     def test_tts_endpoint(self, client):
-        """Test POST /api/tts"""
+        """Test POST /api/tts."""
         response = client.post(
             "/api/tts", json={"text": "Test speech", "speaker_id": "shakti"}
         )
@@ -69,10 +114,10 @@ class TestHTTPEndpoints:
 
 
 class TestWebSocketEndpoint:
-    """Test WebSocket streaming endpoint"""
+    """Test WebSocket streaming endpoint."""
 
     def test_websocket_connection(self, client):
-        """Test WebSocket can connect"""
+        """Test WebSocket can connect."""
         with client.websocket_connect("/api/debate/stream-adk") as websocket:
             # Send request
             websocket.send_json({"topic": "WS Test", "turns": 2})
@@ -94,7 +139,7 @@ class TestWebSocketEndpoint:
             assert len(non_complete_events) >= 3  # intro + turns + conclusion
 
     def test_websocket_event_types(self, client):
-        """Test WebSocket returns correct event types"""
+        """Test WebSocket returns correct event types."""
         with client.websocket_connect("/api/debate/stream-adk") as websocket:
             websocket.send_json({"topic": "Event Test", "turns": 2})
 
@@ -114,10 +159,10 @@ class TestWebSocketEndpoint:
 
 
 class TestCORSConfiguration:
-    """Test CORS headers and configuration"""
+    """Test CORS headers and configuration."""
 
     def test_cors_headers_present(self, client):
-        """Verify CORS headers are set"""
+        """Verify CORS headers are set."""
         response = client.options("/", headers={"Origin": "http://localhost:3000"})
 
         # CORS headers should be present
