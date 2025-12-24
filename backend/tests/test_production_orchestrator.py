@@ -7,8 +7,11 @@ import pytest
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add backend directory to Python path
+backend_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(backend_dir))
 
+# Import after path setup
 from production_orchestrator import ProductionADKOrchestrator
 
 

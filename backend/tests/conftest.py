@@ -1,7 +1,5 @@
 import pytest
 from unittest.mock import MagicMock
-import os
-import sys
 
 # -------------------------------------------------------------------------
 # SAFE GCP MOCKS
@@ -23,6 +21,7 @@ except ImportError:
 # Mock Storage (used in orchestrator.py)
 try:
     from google.cloud import storage
+
     storage.Client = MagicMock()
 except ImportError:
     pass
@@ -30,6 +29,7 @@ except ImportError:
 # 2. Mock TextToSpeech (used in main.py)
 try:
     from google.cloud import texttospeech
+
     mock_tts_client = MagicMock()
     mock_response = MagicMock()
     mock_response.audio_content = b"fake_audio_content"
