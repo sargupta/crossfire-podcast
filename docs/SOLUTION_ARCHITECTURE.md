@@ -56,6 +56,7 @@ flowchart TB
             Gemini["✨ Gemini 2.0 Flash<br/>(LLM)"]
             Vertex["✅ Vertex AI<br/>Evaluation"]
             Filter["🛡️ Safety Filter<br/>Guardrails"]
+            TTS["🗣️ Cloud TTS<br/>Audio Synthesis"]
         end
     end
 
@@ -88,6 +89,8 @@ flowchart TB
     Agents <==> |"Generate (Stream)"| Gemini
     Orch ==> |"Validate"| Vertex
     Orch ==> |"Check"| Filter
+    
+    FE ==> |"Audio Req"| TTS
     
     Orch ==> |"Persist State"| SessionStore
     Orch ==> |"Archive"| AssetStore
