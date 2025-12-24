@@ -35,25 +35,30 @@ orchestrator = PodcastOrchestrator()
 adk_orchestrator = ADKDebateOrchestrator()
 tts_client = texttospeech.TextToSpeechClient()
 
+
 class DebateRequest(BaseModel):
     topic: str
     turns: Optional[int] = 6
 
+
 class TTSRequest(BaseModel):
     text: str
     speaker_id: str
+
 
 VOICE_MAP = {
     "sovereignist": "en-IN-Neural2-B",
     "reformist": "en-GB-Neural2-A",
     "technocrat": "en-US-Journey-D",
     "humanist": "en-US-Neural2-F",
-    "shakti": "en-IN-Neural2-A"
+    "shakti": "en-IN-Neural2-A",
 }
+
 
 @app.get("/")
 def read_root():
     return {"status": "Omni-Cast ADK Backend Operational"}
+
 
 @app.post("/api/debate/generate")
 def generate_debate(req: DebateRequest):
@@ -64,16 +69,16 @@ def generate_debate(req: DebateRequest):
         print(f"Error generating debate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/tts")
 def generate_tts(req: TTSRequest):
     try:
         voice_name = VOICE_MAP.get(req.speaker_id, "en-US-Neural2-D")
         language_code = "-".join(voice_name.split("-")[:2])
-        
+
         input_text = texttospeech.SynthesisInput(text=req.text)
         voice = texttospeech.VoiceSelectionParams(
-            language_code=language_code,
-            name=voice_name
+            language_code=language_code, name=voice_name
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3
@@ -82,15 +87,17 @@ def generate_tts(req: TTSRequest):
         response = tts_client.synthesize_speech(
             input=input_text, voice=voice, audio_config=audio_config
         )
-        
-        # Return raw bytes? Or base64? 
+
+        # Return raw bytes? Or base64?
         # FastAPI handles bytes response if we use Response class.
         from fastapi import Response
+
         return Response(content=response.audio_content, media_type="audio/mpeg")
-        
+
     except Exception as e:
         print(f"TTS Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.websocket("/api/debate/stream-adk")
 async def adk_debate_stream(websocket: WebSocket):
@@ -99,25 +106,25 @@ async def adk_debate_stream(websocket: WebSocket):
     Real-time multiagent debate with progressive delivery.
     """
     await websocket.accept()
-    
+
     try:
         # Receive topic from client
         data = await websocket.receive_json()
         topic = data.get("topic", "Future of AI")
         turns = data.get("turns", 6)
-        
+
         print(f"[ADK Stream] Starting debate on: {topic}")
-        
+
         # Stream debate events
         async for event in adk_orchestrator.generate_debate_stream(topic, turns):
             # Send event to client
             await websocket.send_json(event)
             print(f"[ADK Stream] Sent {event['type']} turn {event['turn']}")
-        
+
         # Send completion signal
         await websocket.send_json({"type": "complete"})
         print(f"[ADK Stream] Debate complete")
-        
+
     except WebSocketDisconnect:
         print("[ADK Stream] Client disconnected")
     except Exception as e:
@@ -126,11 +133,12 @@ async def adk_debate_stream(websocket: WebSocket):
     finally:
         await websocket.close()
 
+
 @app.websocket("/api/debate/stream-production")
 async def production_debate_stream(websocket: WebSocket):
     """
     Production-grade debate stream with full observability.
-    
+
     Features:
     - Persistent session management
     - Real-time quality evaluation
@@ -138,25 +146,26 @@ async def production_debate_stream(websocket: WebSocket):
     - Complete tracing and metrics
     """
     await websocket.accept()
-    
+
     try:
         data = await websocket.receive_json()
         topic = data.get("topic", "AI Ethics")
         turns = data.get("turns", 6)
-        
+
         print(f"[Production] Starting debate: {topic}")
-        
+
         # Stream with production orchestrator
         async for event in production_orch.generate_debate_stream(topic, turns):
             await websocket.send_json(event)
-        
+
         print(f"[Production] Debate complete")
-        
+
     except WebSocketDisconnect:
         print("[Production] Client disconnected")
     except Exception as e:
         print(f"[Production] Error: {e}")
         await websocket.send_json({"type": "error", "message": str(e)})
+
 
 @app.get("/api/metrics")
 async def get_metrics():
@@ -165,16 +174,12 @@ async def get_metrics():
     """
     try:
         summary = production_orch.observability.metrics.get_metrics_summary()
-        return {
-            "status": "success",
-            "metrics": summary
-        }
+        return {"status": "success", "metrics": summary}
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

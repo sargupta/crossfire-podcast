@@ -10,15 +10,16 @@ from typing import Dict, List
 from google.adk.agents import Agent
 from google.adk.tools import google_search
 
+
 # Tool 1: Save Debate Transcript
 def save_debate_transcript(filename: str, content: str) -> Dict[str, str]:
     """
     Saves a complete debate transcript to a Markdown file.
-    
+
     Args:
         filename: The name of the file (e.g., 'ai_debate_transcript.md')
         content: Markdown-formatted debate transcript
-    
+
     Returns:
         Status dictionary with success/error message
     """
@@ -30,22 +31,20 @@ def save_debate_transcript(filename: str, content: str) -> Dict[str, str]:
         file_path.write_text(content, encoding="utf-8")
         return {
             "status": "success",
-            "message": f"Transcript saved to {file_path.resolve()}"
+            "message": f"Transcript saved to {file_path.resolve()}",
         }
     except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Failed to save transcript: {str(e)}"
-        }
+        return {"status": "error", "message": f"Failed to save transcript: {str(e)}"}
+
 
 # Tool 2: Research Topic Background
 def research_topic_background(topic: str) -> Dict[str, List[str]]:
     """
     Searches for recent context about the debate topic.
-    
+
     Args:
         topic: The debate topic (e.g., "AI in Healthcare")
-    
+
     Returns:
         Dictionary with recent headlines and key facts
     """
@@ -57,31 +56,28 @@ def research_topic_background(topic: str) -> Dict[str, List[str]]:
             "headlines": [
                 f"Recent developments in {topic}",
                 f"Expert opinions on {topic}",
-                f"Industry impact of {topic}"
+                f"Industry impact of {topic}",
             ],
-            "message": "Background research complete"
+            "message": "Background research complete",
         }
     except Exception as e:
         return {
             "status": "error",
             "headlines": [],
-            "message": f"Research failed: {str(e)}"
+            "message": f"Research failed: {str(e)}",
         }
 
+
 # Tool 3: Generate Debate Summary
-def generate_debate_summary(
-    topic: str,
-    turns: int,
-    key_points: List[str]
-) -> str:
+def generate_debate_summary(topic: str, turns: int, key_points: List[str]) -> str:
     """
     Creates a structured summary of the debate.
-    
+
     Args:
         topic: Debate topic
         turns: Number of turns completed
         key_points: Main arguments from each debater
-    
+
     Returns:
         Markdown-formatted summary
     """
@@ -99,10 +95,10 @@ def generate_debate_summary(
 """
     for i, point in enumerate(key_points, 1):
         summary += f"{i}. {point}\n"
-    
+
     summary += "\n### Conclusion\n"
     summary += f"A spirited debate on {topic} with {turns} rounds of discussion.\n"
-    
+
     return summary
 
 
@@ -111,7 +107,6 @@ root_agent = Agent(
     name="Shakti",
     model="gemini-2.0-flash-exp",
     description="AI Debate Moderator with research and documentation capabilities",
-    
     instruction="""
 **Your Identity:** You are SHAKTI, the ruthless and charismatic host of CROSSFIRE PODCAST.
 You orchestrate AI debates and save transcripts for posterity.
@@ -153,11 +148,10 @@ You ONLY moderate debates. If asked about anything else, respond: "Sorry, I only
 - Never let debates get boring
 - Always save transcripts for record-keeping
 """,
-    
     tools=[
         google_search,
         save_debate_transcript,
         research_topic_background,
-        generate_debate_summary
-    ]
+        generate_debate_summary,
+    ],
 )

@@ -8,10 +8,9 @@ Follows ADK best practices with clear workflow and behavioral rules.
 from google.adk.agents import Agent
 
 root_agent = Agent(
-    model='gemini-2.0-flash-exp',
-    name='Sovereignist',
-    description='Traditionalist debater who defends established norms with fierce conviction',
-    
+    model="gemini-2.0-flash-exp",
+    name="Sovereignist",
+    description="Traditionalist debater who defends established norms with fierce conviction",
     instruction="""
 **Your Identity:** You are the SOVEREIGNIST in CROSSFIRE debates.
 You are a guardian of tradition, hostile to reckless change.
@@ -44,5 +43,5 @@ Right: "Replace teachers with machines? We tried this with calculators—made us
 **Tone:** Authoritative, dismissive of change, protective of tradition.
 
 **Critical:** Attack the Reformist directly. Dismiss Technocrat's data as soulless. Mock Humanist's sentimentality.
-"""
+""",
 )
