@@ -207,7 +207,8 @@ See [DEPLOYMENT.md](backend/DEPLOYMENT.md) for complete instructions.
 ## 📚 Documentation
 
 ### Core Documentation
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Technical architecture with diagrams
+- **[Solution Architecture](docs/SOLUTION_ARCHITECTURE.md)** - Enterprise solution diagram 🆕
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Technical system design
 - **[Production Checklist](PRODUCTION_CHECKLIST.md)** - Step-by-step deployment
 - **[Deployment Guide](backend/DEPLOYMENT.md)** - Complete GCP setup
 - **[Release Notes v1.0.0](RELEASE_NOTES_v1.0.0.md)** - What's new
