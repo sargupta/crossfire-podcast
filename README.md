@@ -206,10 +206,16 @@ See [DEPLOYMENT.md](backend/DEPLOYMENT.md) for complete instructions.
 
 ## 📚 Documentation
 
-- [Production Checklist](PRODUCTION_CHECKLIST.md) - Deployment steps
-- [Release Notes v1.0.0](RELEASE_NOTES_v1.0.0.md) - What's new
-- [Test Coverage Report](TEST_COVERAGE_REPORT.md) - Detailed metrics
-- [Deployment Guide](backend/DEPLOYMENT.md) - Complete guide
+### Core Documentation
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Technical architecture with diagrams
+- **[Production Checklist](PRODUCTION_CHECKLIST.md)** - Step-by-step deployment
+- **[Deployment Guide](backend/DEPLOYMENT.md)** - Complete GCP setup
+- **[Release Notes v1.0.0](RELEASE_NOTES_v1.0.0.md)** - What's new
+
+### Technical Details
+- **[Test Coverage Report](TEST_COVERAGE_REPORT.md)** - Detailed test metrics
+- **[AI Orchestration](docs/AI_ORCHESTRATION.md)** - Agent coordination
+- **[API Documentation](http://localhost:8000/docs)** - Interactive Swagger UI
 
 ---
 
