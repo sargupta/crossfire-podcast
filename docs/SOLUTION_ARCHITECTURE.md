@@ -90,7 +90,8 @@ flowchart TB
     Orch ==> |"Validate"| Vertex
     Orch ==> |"Check"| Filter
     
-    FE ==> |"Audio Req"| TTS
+    FE ==> |"POST /api/tts\n(Text)"| TTS
+    TTS ==> |"Audio Bytes"| FE
     
     Orch ==> |"Persist State"| SessionStore
     Orch ==> |"Archive"| AssetStore
@@ -104,7 +105,7 @@ flowchart TB
     class Web,Mobile client;
     class GLB,CDN network;
     class FE,BE,WS app;
-    class Orch,A1,A2,A3,A4,A5,Gemini,Vertex,Filter ai;
+    class Orch,A1,A2,A3,A4,A5,Gemini,Vertex,Filter,TTS ai;
     class SessionStore,AssetStore data;
     class Log,Mon,Trace ops;
 ```
@@ -116,6 +117,38 @@ Leverages **Cloud Run** for stateless application serving (Frontend/Backend) to 
 
 ### 2. Event-Driven Real-time Architecture
 Uses **WebSocket** connections terminated at the service layer to provide <200ms latency for debate streams, essential for the "live" feel of the platform.
+
+## Audio Generation Architecture (Verified)
+
+A key differentiator of CROSSFIRE is its real-time audio pipeline:
+
+1. **Event Stream**: The `Production Orchestrator` emits WebSocket events containing *text only* to minimize latency.
+2. **Client-Side Synthesis**: The Frontend (`PodcastPlayer`) receives the text and immediately calls `POST /api/tts`.
+3. **Parallel Processing**: As audio plays for Turn N, the backend is already generating Turn N+1, ensuring zero-buffering playback.
+4. **Caching**: Audio is generated dynamically, allowing for unique voice selection per agent.
+
+### Audio Request Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Backend
+    participant TTS as Google Cloud TTS
+    
+    Note over Client, Backend: WebSocket Stream Active
+    
+    Backend->>Client: {type: "turn", text: "Hello...", speaker: "shakti"}
+    
+    par Client Processing
+        Client->>Backend: POST /api/tts {text, speaker_id}
+        Backend->>TTS: synthesize_speech(text, Neural2_Voice)
+        TTS-->>Backend: Audio Bytes (MP3)
+        Backend-->>Client: Blob (audio/mpeg)
+        Client->>Client: Audio.play()
+    and Backend Processing
+        Backend->>Backend: Generate Next Turn...
+    end
+```
 
 ### 3. Multi-Layer Intelligence
 Separates **Generation** (Gemini) from **Evaluation** (Vertex AI) to ensure independent quality checks. The **Safety Filter** acts as a strict gateway before any content reaches the user.
