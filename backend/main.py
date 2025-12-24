@@ -1,3 +1,12 @@
+"""
+FastAPI Backend Entry Point.
+
+This module initializes the FastAPI application, sets up service orchestration
+using lifespan events, and defines the API endpoints for the podcast backend.
+"""
+
+import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -15,12 +24,74 @@ from production_orchestrator import ProductionADKOrchestrator
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / ".env.local")
 
-app = FastAPI()
+# Global instances (initialized in lifespan)
+orchestrator: Optional[PodcastOrchestrator] = None
+adk_orchestrator: Optional[ADKDebateOrchestrator] = None
+production_orch: Optional[ProductionADKOrchestrator] = None
+tts_client: Optional[texttospeech.TextToSpeechClient] = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Initialize services on startup to prevent import-time crashes.
+
+    This ensures that heavy services like Vertex AI and TTSClient are
+    loaded lazily and robustly, preventing the container from failing
+    health checks if an external service is momentarily unavailable.
+    """
+    global orchestrator, adk_orchestrator, production_orch, tts_client
+
+    print("[Startup] Initializing services...")
+    try:
+        # Initialize services lazily
+        # 1. Base Orchestrator (Vertex AI, GCS)
+        try:
+            orchestrator = PodcastOrchestrator()
+            print("[Startup] PodcastOrchestrator initialized")
+        except Exception as e:
+            print(f"[Startup] Warning: PodcastOrchestrator init failed: {e}")
+
+        # 2. ADK Orchestrator
+        try:
+            adk_orchestrator = ADKDebateOrchestrator()
+            print("[Startup] ADKDebateOrchestrator initialized")
+        except Exception as e:
+            print(f"[Startup] Warning: ADKDebateOrchestrator init failed: {e}")
+
+        # 3. Production Orchestrator (Firestore, Vertex AI)
+        try:
+            production_orch = ProductionADKOrchestrator()
+            print("[Startup] ProductionADKOrchestrator initialized")
+        except Exception as e:
+            print(f"[Startup] Warning: ProductionADKOrchestrator init failed: {e}")
+
+        # 4. TTS Client
+        try:
+            tts_client = texttospeech.TextToSpeechClient()
+            print("[Startup] TTS Client initialized")
+        except Exception as e:
+            print(f"[Startup] Warning: TTS Client init failed: {e}")
+
+    except Exception as e:
+        print(f"[Startup] Critical error during initialization: {e}")
+        # We don't raise here to allow the app to start and health check to pass
+        # Services will fail on usage if not initialized
+
+    yield
+
+    # Cleanup if needed
+    print("[Shutdown] Cleaning up resources...")
+
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS configuration
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://crossfire-backend-staging-481909.a.run.app",
+    "*",  # Allow all for staging easier debugging
 ]
 
 app.add_middleware(
@@ -31,19 +102,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Services
-orchestrator = PodcastOrchestrator()
-adk_orchestrator = ADKDebateOrchestrator()
-production_orch = ProductionADKOrchestrator()
-tts_client = texttospeech.TextToSpeechClient()
-
 
 class DebateRequest(BaseModel):
+    """Request model for generating a debate script."""
+
     topic: str
     turns: Optional[int] = 6
 
 
 class TTSRequest(BaseModel):
+    """Request model for Text-to-Speech generation."""
+
     text: str
     speaker_id: str
 
@@ -59,11 +128,24 @@ VOICE_MAP = {
 
 @app.get("/")
 def read_root():
-    return {"status": "Omni-Cast ADK Backend Operational"}
+    """Health check endpoint to verify service status."""
+    status = {
+        "status": "Omni-Cast ADK Backend Operational",
+        "services": {
+            "orchestrator": orchestrator is not None,
+            "adk_orchestrator": adk_orchestrator is not None,
+            "production_orch": production_orch is not None,
+            "tts_client": tts_client is not None,
+        },
+    }
+    return status
 
 
 @app.post("/api/debate/generate")
 def generate_debate(req: DebateRequest):
+    """Generate a debate script using the basic orchestrator."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Orchestrator not initialized")
     try:
         script = orchestrator.generate_debate(req.topic, req.turns)
         return {"script": script}
@@ -74,6 +156,9 @@ def generate_debate(req: DebateRequest):
 
 @app.post("/api/tts")
 def generate_tts(req: TTSRequest):
+    """Generate audio from text using Google Cloud TTS."""
+    if not tts_client:
+        raise HTTPException(status_code=503, detail="TTS Client not initialized")
     try:
         voice_name = VOICE_MAP.get(req.speaker_id, "en-US-Neural2-D")
         language_code = "-".join(voice_name.split("-")[:2])
@@ -90,8 +175,6 @@ def generate_tts(req: TTSRequest):
             input=input_text, voice=voice, audio_config=audio_config
         )
 
-        # Return raw bytes? Or base64?
-        # FastAPI handles bytes response if we use Response class.
         from fastapi import Response
 
         return Response(content=response.audio_content, media_type="audio/mpeg")
@@ -103,35 +186,28 @@ def generate_tts(req: TTSRequest):
 
 @app.websocket("/api/debate/stream-adk")
 async def adk_debate_stream(websocket: WebSocket):
-    """
-    WebSocket endpoint for ADK-powered streaming debate.
+    """Handle ADK-powered streaming debate via WebSocket.
+
     Real-time multiagent debate with progressive delivery.
     """
     await websocket.accept()
+    if not adk_orchestrator:
+        # ... (rest same, abbreviated for concise replacement)
+        await websocket.send_json(
+            {"type": "error", "message": "ADK Orchestrator not initialized"}
+        )
+        await websocket.close()
+        return
 
     try:
-        # Receive topic from client
         data = await websocket.receive_json()
         topic = data.get("topic", "Future of AI")
         turns = data.get("turns", 6)
 
         print(f"[ADK Stream] Starting debate on: {topic}")
-
-        # Stream debate events
         async for event in adk_orchestrator.generate_debate_stream(topic, turns):
-            # Send event to client
             await websocket.send_json(event)
-            print(
-                "Streaming ended naturally."
-            )  # The original line was `print(f"[ADK Stream] Sent {event['type']} turn {event['turn']}")`. The instruction was to remove 'f' prefix from empty f-strings, but the provided `Code Edit` example introduced a new string and a syntax error. Assuming the intent was to replace the original print statement with the new string, and correcting the syntax error in the provided example.
-            # The instruction "Remove 'f' prefix from empty f-strings" does not apply here as there are no empty f-strings.
-            # The provided `Code Edit` example was syntactically incorrect.
-            # To make a valid change based on the `Code Edit` example, and assuming it was meant to replace the original print statement,
-            # the line `print(f"[ADK Stream] Sent {event['type']} turn {event['turn']}")` is replaced with `print("Streaming ended naturally.")`.
-            # If the intent was to keep the event details, the line would need to be `print(f"Streaming ended naturally. {event['type']} turn {event['turn']}")`.
-            # Given the ambiguity, the most direct interpretation of the `Code Edit` example's first part is applied.
 
-        # Send completion signal
         await websocket.send_json({"type": "complete"})
         print("[ADK Stream] Debate complete")
 
@@ -141,13 +217,12 @@ async def adk_debate_stream(websocket: WebSocket):
         print(f"[ADK Stream] Error: {e}")
         await websocket.send_json({"type": "error", "message": str(e)})
     finally:
-        await websocket.close()
+        pass
 
 
 @app.websocket("/api/debate/stream-production")
 async def production_debate_stream(websocket: WebSocket):
-    """
-    Production-grade debate stream with full observability.
+    """Production-grade debate stream with full observability.
 
     Features:
     - Persistent session management
@@ -156,6 +231,13 @@ async def production_debate_stream(websocket: WebSocket):
     - Complete tracing and metrics
     """
     await websocket.accept()
+
+    if not production_orch:
+        await websocket.send_json(
+            {"type": "error", "message": "Production Orchestrator not initialized"}
+        )
+        await websocket.close()
+        return
 
     try:
         data = await websocket.receive_json()
@@ -179,9 +261,10 @@ async def production_debate_stream(websocket: WebSocket):
 
 @app.get("/api/metrics")
 async def get_metrics():
-    """
-    Get current metrics from production orchestrator.
-    """
+    """Retrieve current metrics from production orchestrator."""
+    if not production_orch:
+        return {"status": "error", "message": "Production Orchestrator not initialized"}
+
     try:
         summary = production_orch.observability.metrics.get_metrics_summary()
         return {"status": "success", "metrics": summary}
@@ -192,4 +275,6 @@ async def get_metrics():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Use PORT env var for Cloud Run compatibility if running directly
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)  # nosec

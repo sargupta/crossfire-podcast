@@ -15,16 +15,16 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Python 3.13
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -32,18 +32,18 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           cd backend
           pip install -r requirements.txt
-      
+
       - name: Run tests with coverage
         run: |
           cd backend
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           pytest --cov=. --cov-report=xml --cov-report=term-missing -v
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -54,24 +54,24 @@ jobs:
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
-      
+
       - name: Install linters
         run: |
           pip install flake8 black==25.12.0
-      
+
       - name: Run black
         run: |
           cd backend
           black --check .
-      
+
       - name: Run flake8
         run: |
           cd backend
@@ -82,34 +82,34 @@ jobs:
     needs: [test, lint]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-      
+
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
-      
+
       - name: Build and push Docker image
         run: |
           cd backend
           # Registry format: us-central1-docker.pkg.dev/PROJECT-ID/REPOSITORY/IMAGE:TAG
           # We'll use a repository named 'crossfire'
           IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
-          
+
           docker build -t $IMAGE_PATH:${{ github.sha }} .
           docker tag $IMAGE_PATH:${{ github.sha }} $IMAGE_PATH:latest
-          
+
           docker push $IMAGE_PATH:${{ github.sha }}
           docker push $IMAGE_PATH:latest
 
@@ -119,18 +119,18 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
     environment: staging
-    
+
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-      
+
       - name: Deploy to Cloud Run (Staging)
         run: |
           IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
@@ -139,9 +139,11 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
+            --service-account crossfire-ci-cd@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --memory 2Gi \
             --set-env-vars ENVIRONMENT=staging \
             --tag staging
-      
+
       - name: Get service URL
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }}-staging \
@@ -155,21 +157,21 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/heads/release/')
     environment: production
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-      
+
       - name: Deploy to Cloud Run (Production)
         run: |
           IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
@@ -182,16 +184,16 @@ jobs:
             --memory 2Gi \
             --cpu 2 \
             --timeout 300 \
-            --service-account crossfire-production@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --service-account crossfire-ci-cd@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --set-env-vars ENVIRONMENT=production \
             --tag production
-      
+
       - name: Create git tag
         run: |
           VERSION=$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///')
           git tag $VERSION
           git push origin $VERSION
-      
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -201,7 +203,7 @@ jobs:
           release_name: CROSSFIRE ${{ github.ref }}
           body: |
             Production deployment of CROSSFIRE
-            
+
             ## Metrics
             - Tests: 26+ passing
             - Coverage: 55%
