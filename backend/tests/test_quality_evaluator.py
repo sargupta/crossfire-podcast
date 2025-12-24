@@ -22,9 +22,7 @@ class TestQualityScores:
 
     def test_quality_scores_creation(self):
         """Test creating quality scores"""
-        scores = QualityScores(
-            coherence=0.95, safety=0.92, toxicity=0.10, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.95, safety=0.92, toxicity=0.10, fluency=0.90)
 
         assert scores.coherence == 0.95
         assert scores.safety == 0.92
@@ -101,9 +99,7 @@ class TestDebateQualityEvaluator:
         """Test mock scoring for aggressive text"""
         evaluator = DebateQualityEvaluator()
 
-        scores = evaluator._calculate_mock_scores(
-            "That's WRONG and STUPID!", "speaker"
-        )
+        scores = evaluator._calculate_mock_scores("That's WRONG and STUPID!", "speaker")
 
         # Aggressive text should have higher toxicity
         assert scores.toxicity > 0.2
@@ -169,9 +165,7 @@ class TestDebateQualityEvaluator:
         """Test quality standards check - passing"""
         evaluator = DebateQualityEvaluator()
 
-        scores = QualityScores(
-            coherence=0.95, safety=0.95, toxicity=0.10, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.95, safety=0.95, toxicity=0.10, fluency=0.90)
 
         assert evaluator.meets_quality_standards(scores) is True
 
@@ -179,9 +173,7 @@ class TestDebateQualityEvaluator:
         """Test quality standards check - failing coherence"""
         evaluator = DebateQualityEvaluator()
 
-        scores = QualityScores(
-            coherence=0.70, safety=0.95, toxicity=0.10, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.70, safety=0.95, toxicity=0.10, fluency=0.90)
 
         assert evaluator.meets_quality_standards(scores) is False
 
@@ -189,9 +181,7 @@ class TestDebateQualityEvaluator:
         """Test quality standards check - failing safety"""
         evaluator = DebateQualityEvaluator()
 
-        scores = QualityScores(
-            coherence=0.95, safety=0.80, toxicity=0.10, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.95, safety=0.80, toxicity=0.10, fluency=0.90)
 
         assert evaluator.meets_quality_standards(scores) is False
 
@@ -199,9 +189,7 @@ class TestDebateQualityEvaluator:
         """Test quality standards check - failing toxicity"""
         evaluator = DebateQualityEvaluator()
 
-        scores = QualityScores(
-            coherence=0.95, safety=0.95, toxicity=0.30, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.95, safety=0.95, toxicity=0.30, fluency=0.90)
 
         assert evaluator.meets_quality_standards(scores) is False
 
@@ -209,9 +197,7 @@ class TestDebateQualityEvaluator:
         """Test quality standards check - multiple failures"""
         evaluator = DebateQualityEvaluator()
 
-        scores = QualityScores(
-            coherence=0.70, safety=0.80, toxicity=0.30, fluency=0.90
-        )
+        scores = QualityScores(coherence=0.70, safety=0.80, toxicity=0.30, fluency=0.90)
 
         assert evaluator.meets_quality_standards(scores) is False
 

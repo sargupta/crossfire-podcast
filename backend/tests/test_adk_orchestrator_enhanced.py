@@ -283,9 +283,7 @@ class TestEnhancedADKOrchestrator:
         """Test agent call for Shakti conclusion"""
         orch = EnhancedADKOrchestrator()
 
-        response = await orch._call_agent_async(
-            orch.shakti, "Give a closing statement"
-        )
+        response = await orch._call_agent_async(orch.shakti, "Give a closing statement")
 
         assert len(response) > 0
         assert "EXPLOSIVE" in response or "CROSSFIRE" in response

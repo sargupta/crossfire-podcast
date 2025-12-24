@@ -65,9 +65,7 @@ class TestManagedSessionService:
 
     def test_service_custom_location(self):
         """Test service with custom location"""
-        service = ManagedSessionService(
-            project_id="test", location="europe-west1"
-        )
+        service = ManagedSessionService(project_id="test", location="europe-west1")
         assert service.location == "europe-west1"
 
     @pytest.mark.asyncio
