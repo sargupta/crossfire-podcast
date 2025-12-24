@@ -97,17 +97,21 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
       
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker gcr.io
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
       
       - name: Build and push Docker image
         run: |
           cd backend
-          docker build -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-          docker tag gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-                     gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
-          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
+          # Registry format: us-central1-docker.pkg.dev/PROJECT-ID/REPOSITORY/IMAGE:TAG
+          # We'll use a repository named 'crossfire'
+          IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
+          
+          docker build -t $IMAGE_PATH:${{ github.sha }} .
+          docker tag $IMAGE_PATH:${{ github.sha }} $IMAGE_PATH:latest
+          
+          docker push $IMAGE_PATH:${{ github.sha }}
+          docker push $IMAGE_PATH:latest
 
   deploy-staging:
     name: Deploy to Staging
@@ -129,8 +133,9 @@ jobs:
       
       - name: Deploy to Cloud Run (Staging)
         run: |
+          IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
           gcloud run deploy ${{ env.SERVICE_NAME }}-staging \
-            --image gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --image $IMAGE_PATH:${{ github.sha }} \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
@@ -167,8 +172,9 @@ jobs:
       
       - name: Deploy to Cloud Run (Production)
         run: |
+          IMAGE_PATH="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/${{ env.SERVICE_NAME }}"
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --image $IMAGE_PATH:${{ github.sha }} \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --min-instances 1 \
