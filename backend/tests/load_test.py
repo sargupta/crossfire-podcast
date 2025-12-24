@@ -4,11 +4,12 @@ Tests concurrent debate handling and system performance
 """
 
 import asyncio
-import time
-import websockets
 import json
-from typing import List, Dict
 import statistics
+import time
+from typing import Dict, List
+
+import websockets
 
 
 class LoadTester:

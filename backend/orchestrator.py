@@ -1,8 +1,9 @@
-from typing import List, Dict
 import os
 import time
+from typing import Dict, List
+
 import vertexai
-from vertexai.generative_models import GenerativeModel, ChatSession
+from vertexai.generative_models import ChatSession, GenerativeModel
 
 # Initialize Vertex AI
 # Project ID is pulled from environment variable GCP_PROJECT_ID provided by python-dotenv in main.py
@@ -21,7 +22,7 @@ class DebateAgent:
         GOALS: {', '.join(manifest.goals)}
         INSTRUCTIONS: {', '.join(manifest.instructions)}
         TONE: {manifest.tone}
-        
+
         You are participating in a high-stakes debate podcast called OMNI-CAST.
         Keep your responses short (under 50 words), punchy, and spoken-word style.
         Interject aggressively if the phase demands it.
@@ -222,7 +223,7 @@ class PodcastOrchestrator:
             BEHAVIOR: {profile['behavior']}
             TOPIC: {topic}
             CONTEXT: OMNI-CAST Debate.
-            
+
             CRITICAL INSTRUCTIONS:
             1. BE AGGRESSIVE. Attack previous speakers directly.
             2. USE FACTS AS WEAPONS. Under 3 sentences. Punchy.

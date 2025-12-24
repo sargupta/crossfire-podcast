@@ -3,9 +3,10 @@ Integration Tests for Production Orchestrator
 Tests all production modules working together
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add backend directory to Python path
 backend_dir = Path(__file__).parent.parent

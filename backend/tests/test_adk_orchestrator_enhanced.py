@@ -3,16 +3,17 @@ Tests for Enhanced ADK Orchestrator
 Tests transcript generation, file output, and streaming functionality
 """
 
-import pytest
-from pathlib import Path
 import sys
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from adk_orchestrator_enhanced import (  # noqa: E402
-    EnhancedADKOrchestrator,
     DebateMessage,
+    EnhancedADKOrchestrator,
 )
 
 

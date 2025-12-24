@@ -5,9 +5,9 @@ Implements Cloud Trace, Cloud Monitoring, and Cloud Logging
 
 import logging
 import time
-from typing import Dict
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Dict
 
 
 # Configure Cloud Logging (structured logging)

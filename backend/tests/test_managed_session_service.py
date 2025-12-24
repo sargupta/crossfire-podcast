@@ -3,19 +3,17 @@ Tests for Managed Session Service
 Tests session creation, context management, and archival
 """
 
-import pytest
-from pathlib import Path
-import sys
 import json
 import os
 import shutil
+import sys
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from managed_session_service import (  # noqa: E402
-    ManagedSessionService,
-    DebateContext,
-)
+from managed_session_service import DebateContext, ManagedSessionService  # noqa: E402
 
 
 class TestDebateContext:

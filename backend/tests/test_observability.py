@@ -3,18 +3,19 @@ Tests for Observability Module
 Tests logging, tracing, and metrics collection
 """
 
-import pytest
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from observability import (  # noqa: E402
-    StructuredLogger,
-    SimpleTracer,
     MetricsCollector,
     Observability,
+    SimpleTracer,
+    StructuredLogger,
 )
 
 

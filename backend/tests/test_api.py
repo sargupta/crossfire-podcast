@@ -3,16 +3,18 @@ API Integration Tests for FastAPI Endpoints
 Tests WebSocket and HTTP endpoints
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
 
+import pytest
+from fastapi.testclient import TestClient
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import app  # noqa: E402
 from unittest.mock import MagicMock  # noqa: E402
+
 import main  # noqa: E402
+from main import app  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

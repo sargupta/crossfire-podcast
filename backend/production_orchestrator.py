@@ -4,15 +4,14 @@ Integrates all production modules: sessions, quality, observability
 """
 
 import asyncio
-
-from typing import AsyncGenerator, Dict, Optional
 from datetime import datetime
-
-from managed_session_service import ManagedSessionService, DebateContext
-from quality_evaluator import DebateQualityEvaluator, SafetyFilter
-from observability import Observability
+from typing import AsyncGenerator, Dict, Optional
 
 from google.adk.agents.llm_agent import Agent
+
+from managed_session_service import DebateContext, ManagedSessionService
+from observability import Observability
+from quality_evaluator import DebateQualityEvaluator, SafetyFilter
 
 
 class ProductionADKOrchestrator:

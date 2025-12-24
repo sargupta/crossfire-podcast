@@ -3,8 +3,9 @@ Test client for ADK WebSocket streaming endpoint
 """
 
 import asyncio
-import websockets
 import json
+
+import websockets
 
 
 async def test_adk_stream():

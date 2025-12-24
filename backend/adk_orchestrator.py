@@ -7,10 +7,10 @@ to create dynamic debates with real-time streaming.
 """
 
 import asyncio
-from typing import AsyncGenerator, Dict, List
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import AsyncGenerator, Dict, List
 
 # Import ADK Agent class
 sys.path.insert(0, str(Path(__file__).parent / "adk_agents"))

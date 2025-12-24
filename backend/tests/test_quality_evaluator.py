@@ -3,16 +3,17 @@ Tests for Quality Evaluator
 Tests quality scoring, safety filtering, and trajectory analysis
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from quality_evaluator import (  # noqa: E402
     DebateQualityEvaluator,
-    SafetyFilter,
     QualityScores,
+    SafetyFilter,
 )
 
 

@@ -3,11 +3,11 @@ Managed Session Service using Agent Engine's Context Management
 Replaces InMemorySessionService for production
 """
 
+import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
-import json
 
 
 @dataclass
