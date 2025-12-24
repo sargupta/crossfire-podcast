@@ -193,8 +193,8 @@ jobs:
         run: |
           VERSION=$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          git tag $VERSION
-          git push origin $VERSION
+          git tag $VERSION || echo "Tag $VERSION already exists"
+          git push origin $VERSION || echo "Tag $VERSION already pushed"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
