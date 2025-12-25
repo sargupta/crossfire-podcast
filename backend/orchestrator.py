@@ -99,20 +99,30 @@ class PodcastOrchestrator:
         project_id = os.getenv("GCP_PROJECT_ID", "aipodcaster-481909")
         try:
             vertexai.init(project=project_id, location="us-central1")
+            # Use stable model
+            self.model = GenerativeModel("gemini-1.5-flash")
         except Exception as e:
-            print(f"Vertex Init Warning: {e}")
+            print(f"Vertex AI Init Error: {e}")
+            raise
 
-        # 2. Initialize TTS Client
+        # 2. Text-to-Speech
         from google.cloud import texttospeech
 
-        self.tts_client = texttospeech.TextToSpeechClient()
+        try:
+            self.tts_client = texttospeech.TextToSpeechClient()
+        except Exception as e:
+            print(f"TTS Init Error: {e}")
+            self.tts_client = None
 
         # 3. Initialize Storage
         from google.cloud import storage
 
-        self.storage_client = storage.Client()
-        self.bucket_name = "omni-cast-assets-aipodcaster"  # User's actual bucket
-        self._ensure_bucket()
+        self.bucket_name = "omni-cast-assets-aipodcaster"
+        try:
+            self.storage_client = storage.Client()
+        except Exception as e:
+            print(f"Storage Init Error: {e}")
+            self.storage_client = None
 
         self.agents = {}
 

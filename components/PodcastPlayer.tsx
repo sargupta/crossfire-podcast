@@ -124,8 +124,8 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
         }
     };
 
-    const getAvatar = (id: string) => {
-        const key = id.toLowerCase();
+    const getAvatar = (id: string | number) => {
+        const key = String(id || "").toLowerCase();
         if (key.includes("sovereignist")) return AVATAR_MAP.sovereignist;
         if (key.includes("reformist")) return AVATAR_MAP.reformist;
         if (key.includes("technocrat")) return AVATAR_MAP.technocrat;
@@ -134,8 +134,8 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
         return "/images/shakti.png";
     };
 
-    const getAgentColor = (id: string) => {
-        const key = id.toLowerCase();
+    const getAgentColor = (id: string | number) => {
+        const key = String(id || "").toLowerCase();
         if (key.includes("sovereignist")) return AGENT_COLORS.sovereignist;
         if (key.includes("reformist")) return AGENT_COLORS.reformist;
         if (key.includes("technocrat")) return AGENT_COLORS.technocrat;
