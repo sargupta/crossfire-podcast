@@ -23,7 +23,7 @@ def mock_services():
     """Mock all backend services to prevent real API calls."""
     # 1. Mock PodcastOrchestrator
     mock_orch = MagicMock()
-    mock_orch.generate_debate.return_value = "Mock Script"
+    mock_orch.generate_debate.return_value = {"script": [], "cast": []}
 
     # 2. Mock ADKDebateOrchestrator (Async Generator)
     mock_adk = MagicMock()
