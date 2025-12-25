@@ -311,7 +311,7 @@ class PodcastOrchestrator:
         # Host Intro
         host = self.agents.get("shakti")
         if host:
-            time.sleep(5)
+            time.sleep(0.1)
             resp = host.chat.send_message(
                 f"Start the debate. Introduce the topic '{topic}' and the panel."
             )
@@ -322,7 +322,7 @@ class PodcastOrchestrator:
         # Rounds
         order = ["sovereignist", "reformist", "technocrat", "humanist"]
         for i in range(turns):
-            time.sleep(5)
+            time.sleep(0.1)
             key = order[i % len(order)]
             agent = self.agents.get(key)
             if not agent:
