@@ -6,8 +6,7 @@ Uses Vertex AI for casting and script generation.
 """
 
 import os
-import time
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import vertexai
 from vertexai.generative_models import ChatSession, GenerativeModel
@@ -37,8 +36,6 @@ class DebateAgent:
         Keep your responses short (under 50 words), punchy, and spoken-word style.
         Interject aggressively if the phase demands it.
         """
-        # Send system prompt as history (or use system_instruction if model supports it directly in init)
-        # Gemini 1.5 Pro support system_instruction in constructor.
 
 
 class PodcastOrchestrator:
@@ -47,8 +44,6 @@ class PodcastOrchestrator:
 
     Handles Casting, Agent instantiation, Script Generation, and TTS.
     """
-
-    # ... (Constants remain) ...
 
     CASTING_PROMPT = """
     CRITICAL: The topic can be ANYTHING (Politics, Sports, Coding, Movies, Food).
@@ -99,7 +94,7 @@ class PodcastOrchestrator:
         project_id = os.getenv("GCP_PROJECT_ID", "aipodcaster-481909")
         try:
             vertexai.init(project=project_id, location="us-central1")
-            # Use stable model
+            # Use stable model for default, though generate_debate sets its own
             self.model = GenerativeModel("gemini-1.5-flash")
         except Exception as e:
             print(f"Vertex AI Init Error: {e}")
@@ -125,6 +120,13 @@ class PodcastOrchestrator:
             self.storage_client = None
 
         self.agents = {}
+        self.debug_logs = []
+
+    def log(self, msg: str):
+        """Append a message to the debug log."""
+        print(msg)
+        if hasattr(self, "debug_logs"):
+            self.debug_logs.append(str(msg))
 
     def _ensure_bucket(self):
         """Ensure GCS bucket exists."""
@@ -186,7 +188,7 @@ class PodcastOrchestrator:
         )
         return response.audio_content
 
-    def generate_cast(self, topic: str) -> tuple[List[Dict[str, str]], str]:
+    def generate_cast(self, topic: str) -> Tuple[List[Dict[str, str]], str]:
         """Generate a cast of 5 debate personas based on the topic."""
         # Use a "Thinking" model (Pro) for Casting to get creative results
         candidate_models = [
@@ -263,108 +265,174 @@ class PodcastOrchestrator:
         # Return a valid model name for the agents to use
         return fallback_cast, "gemini-2.0-flash-exp"
 
-    def generate_debate(self, topic: str, turns: int = 6) -> Dict:
+    def generate_debate(self, topic: str, turns: int = 4):
         """Generate a full debate script and audio."""
-        # 1. Dynamic Casting
-        cast, working_model_name = self.generate_cast(topic)
-        if not cast:
-            raise ValueError("No agents could be cast.")
+        self.debug_logs = []
+        self.log(f"Starting generation for topic: {topic} with {turns} turns")
 
-        # 2. Instantiate Agents
-        self.agents = {}
+        # 2. Dynamic Casting
+        try:
+            formatted_cast, _ = self.generate_cast(topic)
+            self.log(f"Cast generated: {len(formatted_cast)} agents")
+        except Exception as e:
+            self.log(f"Cast generation error: {e}")
+            fallback = [
+                {
+                    "category_id": 1,
+                    "name": "Shakti",
+                    "sub_role": "Moderator",
+                    "credential": "AI",
+                    "behavior": "Strict",
+                },
+                {
+                    "category_id": 2,
+                    "name": "Sovereignist",
+                    "sub_role": "Sovereignist",
+                    "credential": "Patriot",
+                    "behavior": "Defensive",
+                },
+                {
+                    "category_id": 3,
+                    "name": "Reformist",
+                    "sub_role": "Reformist",
+                    "credential": "Change",
+                    "behavior": "Critical",
+                },
+                {
+                    "category_id": 4,
+                    "name": "Technocrat",
+                    "sub_role": "Technocrat",
+                    "credential": "Data",
+                    "behavior": "Cold",
+                },
+                {
+                    "category_id": 5,
+                    "name": "Humanist",
+                    "sub_role": "Humanist",
+                    "credential": "People",
+                    "behavior": "Emotional",
+                },
+            ]
+            formatted_cast = fallback
+            self.log("Using Fallback Cast")
+
         active_cast = []
-        for profile in cast:
-            cat_id = str(profile.get("category_id", "")).lower()
-            if not cat_id:
-                continue
+        self.agents = {}
 
-            # Map keys
-            key = cat_id
-            if "sovereignist" in cat_id:
-                key = "sovereignist"
-            elif "reformist" in cat_id:
-                key = "reformist"
-            elif "technocrat" in cat_id:
-                key = "technocrat"
-            elif "humanist" in cat_id:
-                key = "humanist"
-            elif "shakti" in cat_id:
-                key = "shakti"
+        system_prompt = """
+        You are a debater in a high-stakes automated podcast.
+        Role: {sub_role}
+        Background: {credential}
+        Personality: {behavior}
 
-            system_prompt = f"""
-            IDENTITY: {profile['name']}
-            ROLE: {profile['sub_role']}
-            BEHAVIOR: {profile['behavior']}
-            TOPIC: {topic}
-            CONTEXT: OMNI-CAST Debate.
+        CRITICAL INSTRUCTIONS:
+        1. Keep response under 3 sentences.
+        2. Be concise.
+        """
 
-            CRITICAL INSTRUCTIONS:
-            1. BE AGGRESSIVE. Attack previous speakers directly.
-            2. USE FACTS AS WEAPONS. Under 3 sentences. Punchy.
-            3. SHOW NO MERCY.
-            """
-            agent_model = GenerativeModel(
-                working_model_name, system_instruction=system_prompt
-            )
-            self.agents[key] = SimpleAgentWrapper(profile["name"], agent_model)
-            active_cast.append(profile)
+        for profile in formatted_cast:
+            # Handle key derivation carefully
+            if "category_id" in profile:
+                key = str(profile["category_id"]).lower()  # e.g. "sovereignist" or "1"
+                # Map to role names if needed, or stick to simple keys
+                if "sovereignist" in key:
+                    key = "sovereignist"
+                elif "reformist" in key:
+                    key = "reformist"
+                elif "technocrat" in key:
+                    key = "technocrat"
+                elif "humanist" in key:
+                    key = "humanist"
+                elif "shakti" in key:
+                    key = "shakti"
+            else:
+                key = profile["sub_role"].lower()
+
+            role_prompt = system_prompt.format(**profile)
+            try:
+                agent_model = GenerativeModel(
+                    "gemini-1.5-flash", system_instruction=role_prompt
+                )
+                self.agents[key] = SimpleAgentWrapper(profile["name"], agent_model)
+                active_cast.append(profile)
+                self.log(f"Instantiated agent: {key}")
+            except Exception as e:
+                self.log(f"Error instantiating {key}: {e}")
 
         if not self.agents:
-            raise ValueError("No agents instantiated.")
+            self.log("No agents instantiated! Aborting.")
+            return {"cast": [], "script": [], "debug_log": self.debug_logs}
 
-        # 3. Execution (Script Generation)
         script = []
-        history_text = f"TOPIC: {topic}\nPANEL:\n" + "\n".join(
-            [f"- {p['name']} ({p['sub_role']})" for p in active_cast]
-        )
+        history_text = f"TOPIC: {topic}\n"
 
         # Host Intro
         host = self.agents.get("shakti")
         if host:
-            time.sleep(0.1)
-            resp = host.chat.send_message(
-                f"Start the debate. Introduce the topic '{topic}' and the panel."
-            )
-            text = resp.text.strip()
-            script.append({"speaker": "shakti", "text": text, "name": host.name})
-            history_text += f"{host.name}: {text}\n"
+            self.log("Generating Host Intro...")
+            try:
+                import time
+
+                time.sleep(0.1)
+                resp = host.chat.send_message(
+                    f"Start the debate on '{topic}'. Introduce panel."
+                )
+                text = resp.text.strip()
+                self.log(f"Host Intro: {text[:50]}...")
+                script.append({"speaker": "shakti", "text": text, "name": host.name})
+                history_text += f"Shakti: {text}\n"
+            except Exception as e:
+                self.log(f"Host Intro Error: {e}")
+                script.append(
+                    {"speaker": "System", "text": f"Error: {e}", "name": "System"}
+                )
+        else:
+            self.log("Host (shakti) not found!")
 
         # Rounds
         order = ["sovereignist", "reformist", "technocrat", "humanist"]
         for i in range(turns):
-            time.sleep(0.1)
             key = order[i % len(order)]
             agent = self.agents.get(key)
             if not agent:
+                self.log(f"Agent {key} not found, skipping.")
                 continue
 
-            prompt = (
-                f"The conversation so far:\n{history_text}\nIt is your turn. React."
-            )
-            resp = agent.chat.send_message(prompt)
-            text = resp.text.strip()
+            self.log(f"Generating turn {i+1} for {key}...")
+            prompt = f"Previous conversation:\n{history_text}\nIt is your turn. Speak."
+            try:
+                import time
 
-            script.append({"speaker": key, "text": text, "name": agent.name})
-            history_text += f"{agent.name}: {text}\n"
+                time.sleep(0.1)
+                resp = agent.chat.send_message(prompt)
+                text = resp.text.strip()
+                self.log(f"Agent Response: {text[:50]}...")
+                script.append({"speaker": key, "text": text, "name": agent.name})
+                history_text += f"{agent.name}: {text}\n"
+            except Exception as e:
+                self.log(f"Agent Error ({key}): {e}")
+                script.append(
+                    {"speaker": "System", "text": f"Error: {e}", "name": "System"}
+                )
 
-        # 4. Batch TTS & Upload (The "Generate Entire Podcast" Phase)
-        print("Script generated. Starting Batch Audio Synthesis...")
+        self.log(f"Script generated: {len(script)} lines. Starting TTS...")
+
         import uuid
 
         for idx, line in enumerate(script):
+            if line["speaker"] == "System":
+                continue
             try:
-                print(f"  Synthesizing line {idx+1}/{len(script)}: {line['speaker']}")
+                self.log(f"Synthesizing line {idx+1}")
                 audio_bytes = self._synthesize_line(line["text"], line["speaker"])
                 filename = f"{uuid.uuid4()}.mp3"
-                print(f"  Uploading {filename} to GCS...")
                 public_url = self._upload_audio(audio_bytes, filename)
                 line["audio_url"] = public_url
-                print(f"  ✅ {filename} uploaded: {public_url}")
             except Exception as e:
-                print(f"  ❌ Error on line {idx+1}: {e}")
-                line["audio_url"] = ""  # Empty URL on failure
+                self.log(f"TTS Error line {idx+1}: {e}")
+                line["audio_url"] = ""
 
-        return {"cast": active_cast, "script": script}
+        return {"cast": active_cast, "script": script, "debug_log": self.debug_logs}
 
 
 class SimpleAgentWrapper:
