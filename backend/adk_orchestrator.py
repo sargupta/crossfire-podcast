@@ -1,6 +1,7 @@
 """
-ADK Multi-Agent Debate Orchestrator - WORKING VERSION
-CROSSFIRE PODCAST - Streaming Architecture
+ADK Multi-Agent Debate Orchestrator - WORKING VERSION.
+
+CROSSFIRE PODCAST - Streaming Architecture.
 
 This module coordinates the 5 ADK agents using their chat capabilities
 to create dynamic debates with real-time streaming.
@@ -19,7 +20,7 @@ from google.adk.agents.llm_agent import Agent
 
 @dataclass
 class DebateMessage:
-    """A single message in the debate"""
+    """A single message in the debate."""
 
     speaker: str
     agent_name: str
@@ -35,6 +36,21 @@ class ADKDebateOrchestrator:
     """
 
     def __init__(self):
+        """Initialize the Orchestrator with agents and Vertex AI."""
+        # 0. Initialize Vertex AI & TTS
+        import os
+
+        import vertexai
+        from google.cloud import texttospeech
+
+        project_id = os.getenv("GCP_PROJECT_ID", "aipodcaster-481909")
+        try:
+            vertexai.init(project=project_id, location="us-central1")
+            self.tts_client = texttospeech.TextToSpeechClient()
+        except Exception as e:
+            print(f"ADK Init Warning: {e}")
+            self.tts_client = None
+
         # Define agents inline to avoid import issues
         self.shakti = Agent(
             model="gemini-2.0-flash-exp",
@@ -102,6 +118,48 @@ Example: "You're talking about kids like data points! Every child needs a human 
         self.debate_history: List[DebateMessage] = []
         self.current_turn = 0
 
+        self.VOICE_MAP = {
+            "sovereignist": "en-IN-Neural2-B",
+            "reformist": "en-GB-Neural2-A",
+            "technocrat": "en-US-Journey-D",
+            "humanist": "en-US-Neural2-F",
+            "shakti": "en-IN-Neural2-A",
+        }
+
+    async def _synthesize(self, text: str, speaker: str) -> str:
+        """Synthesize audio and return Base64 string."""
+        if not self.tts_client:
+            return ""
+
+        try:
+            import base64
+
+            from google.cloud import texttospeech
+
+            voice_name = self.VOICE_MAP.get(speaker, "en-US-Neural2-D")
+            language_code = "-".join(voice_name.split("-")[:2])
+
+            synthesis_input = texttospeech.SynthesisInput(text=text)
+            voice = texttospeech.VoiceSelectionParams(
+                language_code=language_code, name=voice_name
+            )
+            audio_config = texttospeech.AudioConfig(
+                audio_encoding=texttospeech.AudioEncoding.MP3
+            )
+
+            # Run sychronous API in thread
+            response = await asyncio.to_thread(
+                self.tts_client.synthesize_speech,
+                input=synthesis_input,
+                voice=voice,
+                audio_config=audio_config,
+            )
+
+            return base64.b64encode(response.audio_content).decode("utf-8")
+        except Exception as e:
+            print(f"TTS Error: {e}")
+            return ""
+
     async def generate_debate_stream(
         self, topic: str, turns: int = 8
     ) -> AsyncGenerator[Dict, None]:
@@ -111,16 +169,17 @@ Example: "You're talking about kids like data points! Every child needs a human 
         Yields:
             Dict events with type: 'intro', 'turn', 'conclusion'
         """
-
         # 1. Moderator Introduction
         intro_prompt = f"Introduce this explosive debate topic in 2 sentences: {topic}"
         intro_response = await self._call_agent_async(self.shakti, intro_prompt)
+        intro_audio = await self._synthesize(intro_response, "shakti")
 
         yield {
             "type": "intro",
             "speaker": "shakti",
             "agent_name": "Shakti",
             "text": intro_response,
+            "audio_content": intro_audio,
             "turn": 0,
         }
 
@@ -151,6 +210,7 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
             debater_response = await self._call_agent_async(
                 debater_agent, debater_prompt
             )
+            debater_audio = await self._synthesize(debater_response, debater_id)
 
             # Record in history
             msg = DebateMessage(
@@ -166,6 +226,7 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
                 "speaker": debater_id,
                 "agent_name": debater_agent.name,
                 "text": debater_response,
+                "audio_content": debater_audio,
                 "turn": turn,
             }
 
@@ -177,18 +238,21 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
             f"Give a dramatic 2-sentence closing for this debate: {topic}"
         )
         conclusion = await self._call_agent_async(self.shakti, conclusion_prompt)
+        conclusion_audio = await self._synthesize(conclusion, "shakti")
 
         yield {
             "type": "conclusion",
             "speaker": "shakti",
             "agent_name": "Shakti",
             "text": conclusion,
+            "audio_content": conclusion_audio,
             "turn": turns + 1,
         }
 
     async def _call_agent_async(self, agent: Agent, prompt: str) -> str:
         """
         Call an ADK agent using proper session management.
+
         This uses REAL AI with ADK's session service!
         """
         try:
@@ -234,7 +298,7 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
             return self._get_fallback_response(agent.name)
 
     def _get_fallback_response(self, agent_name: str) -> str:
-        """Fallback responses if ADK call fails"""
+        """Fallback responses if ADK call fails."""
         fallbacks = {
             "Shakti": "BREAKING! Let's keep this debate moving!",
             "Sovereignist": "Tradition has proven itself. Change must prove worthy!",
@@ -245,7 +309,7 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
         return fallbacks.get(agent_name, "...")
 
     def _format_history(self) -> str:
-        """Format debate history for context"""
+        """Format debate history for context."""
         if not self.debate_history:
             return "(Debate just starting)"
 
@@ -258,7 +322,7 @@ React to this debate. Attack previous speakers if relevant. Stay in character.
 
 # Test function
 async def test_debate():
-    """Test the orchestrator"""
+    """Test the orchestrator."""
     orchestrator = ADKDebateOrchestrator()
 
     topic = "Should AI Replace Human Teachers?"

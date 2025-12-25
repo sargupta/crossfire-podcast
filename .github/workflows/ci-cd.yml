@@ -141,7 +141,7 @@ jobs:
             --allow-unauthenticated \
             --service-account crossfire-ci-cd@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --memory 2Gi \
-            --set-env-vars ENVIRONMENT=staging \
+            --set-env-vars ENVIRONMENT=staging,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }} \
             --tag staging
 
       - name: Get service URL
@@ -186,7 +186,7 @@ jobs:
             --cpu 2 \
             --timeout 300 \
             --service-account crossfire-ci-cd@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
-            --set-env-vars ENVIRONMENT=production \
+            --set-env-vars ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }} \
             --tag production
 
       - name: Create git tag
@@ -248,6 +248,7 @@ jobs:
           gcloud run deploy crossfire-frontend-staging \
             --image us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/crossfire/frontend-staging:${{ github.sha }} \
             --service-account crossfire-ci-cd@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }} \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
