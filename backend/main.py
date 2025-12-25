@@ -147,8 +147,7 @@ def generate_debate(req: DebateRequest):
     if not orchestrator:
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
     try:
-        script = orchestrator.generate_debate(req.topic, req.turns)
-        return {"script": script}
+        return orchestrator.generate_debate(req.topic, req.turns)
     except Exception as e:
         print(f"Error generating debate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
