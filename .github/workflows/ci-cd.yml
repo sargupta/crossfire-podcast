@@ -179,6 +179,7 @@ jobs:
             --image $IMAGE_PATH:${{ github.sha }} \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
+            --allow-unauthenticated \
             --min-instances 1 \
             --max-instances 10 \
             --memory 2Gi \
