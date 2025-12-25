@@ -1,6 +1,10 @@
 'use client';
 
-import PodcastPlayer from '@/components/PodcastPlayer';
+import dynamic from 'next/dynamic';
+
+const PodcastPlayer = dynamic(() => import('@/components/PodcastPlayer'), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
