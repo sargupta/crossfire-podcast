@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Activity, Sparkles } from 'lucide-react';
 
@@ -44,6 +44,7 @@ const AGENT_COLORS: Record<string, string> = {
 
 export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps) {
     const [topic, setTopic] = useState(initialTopic);
+    const [mounted, setMounted] = useState(false);
     const [status, setStatus] = useState<string>("Ready");
     const [isGenerating, setIsGenerating] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -146,6 +147,10 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
     const host = cast.find(c => c.category_id === 'shakti');
     const guests = cast.filter(c => c.category_id !== 'shakti');
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden relative">
 
@@ -153,7 +158,7 @@ export default function PodcastPlayer({ initialTopic = "" }: PodcastPlayerProps)
             <div className="fixed inset-0 bg-gradient-to-br from-violet-600/20 via-pink-500/20 to-cyan-500/20 animate-gradient-shift" />
 
             {/* Floating Particles Effect */}
-            <FloatingParticles />
+            {mounted && <FloatingParticles />}
 
             {/* Header */}
             <header className="relative z-10 border-b border-white/10 backdrop-blur-md">
