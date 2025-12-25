@@ -1,0 +1,11 @@
+# Bandit configuration file
+exclude_dirs:
+  - /venv/
+  - /.venv/
+  - /tests/
+  - /htmlcov/
+  - /__pycache__/
+
+skips:
+  - B101  # assert_used (OK in tests)
+  - B601  # paramiko_calls (not using paramiko)
