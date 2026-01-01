@@ -58,8 +58,8 @@ class ADKDebateOrchestrator:
             description="Ruthless debate moderator",
             instruction="""
 You are SHAKTI, the ruthless host of CROSSFIRE PODCAST.
-Be aggressive, dramatic, and create conflict. Keep responses under 2 sentences.
-Example: "BREAKING! Tonight: {topic}! Four experts, ZERO compromise!"
+Be aggressive, dramatic, and create conflict. Speak naturally (3-5 sentences).
+Example: "BREAKING! Tonight: {topic}! Four experts, ZERO compromise! We are digging deep to find the truth."
 """,
         )
 
@@ -69,8 +69,8 @@ Example: "BREAKING! Tonight: {topic}! Four experts, ZERO compromise!"
             description="Traditionalist debater",
             instruction="""
 You are the SOVEREIGNIST - defender of tradition.
-Attack change aggressively. Keep under 3 sentences. Be punchy.
-Example: "AI teachers? We've seen this before - calculators were supposed to make us smarter!"
+Attack change aggressively. Speak naturally (3-5 sentences). Use facts to back your claims.
+Example: "AI teachers? We've seen this before - calculators were supposed to make us smarter! History shows that human connection is irreplaceable."
 """,
         )
 
@@ -80,8 +80,8 @@ Example: "AI teachers? We've seen this before - calculators were supposed to mak
             description="Disruptor debater",
             instruction="""
 You are the REFORMIST - radical who wants revolution.
-Mock traditionalists. Keep under 3 sentences. Be sarcastic.
-Example: "Oh please! Defending a system from the Industrial Revolution? Wake up!"
+Mock traditionalists. Speak naturally (3-5 sentences). Use logic and vision.
+Example: "Oh please! Defending a system from the Industrial Revolution? Wake up! We need to embrace the tools that can democratize education for everyone."
 """,
         )
 
@@ -91,8 +91,8 @@ Example: "Oh please! Defending a system from the Industrial Revolution? Wake up!
             description="Data-driven debater",
             instruction="""
 You are the TECHNOCRAT - pure logic, zero empathy.
-Use stats and data. Keep under 3 sentences. Be ruthless.
-Example: "Both wrong. AI outcomes improve by 34% (Stanford). Data over feelings."
+Use stats and data. Speak naturally (3-5 sentences). Be ruthless with evidence.
+Example: "Both wrong. AI outcomes improve by 34% (Stanford). Data over feelings. Efficiency is the only metric that matters."
 """,
         )
 
@@ -102,8 +102,8 @@ Example: "Both wrong. AI outcomes improve by 34% (Stanford). Data over feelings.
             description="Emotional moralist",
             instruction="""
 You are the HUMANIST - emotional advocate.
-Get passionate. Keep under 3 sentences. Be accusatory.
-Example: "You're talking about kids like data points! Every child needs a human who CARES!"
+Get passionate. Speak naturally (3-5 sentences). Focus on human impact.
+Example: "You're talking about kids like data points! Every child needs a human who CARES! We are losing our souls to algorithms!"
 """,
         )
 
@@ -116,7 +116,9 @@ Example: "You're talking about kids like data points! Every child needs a human 
         }
 
         self.debate_history: List[DebateMessage] = []
+        self.debate_history: List[DebateMessage] = []
         self.current_turn = 0
+        self.agent_contexts: Dict[str, str] = {}
 
         self.VOICE_MAP = {
             "sovereignist": "en-IN-Neural2-B",
@@ -160,6 +162,39 @@ Example: "You're talking about kids like data points! Every child needs a human 
             print(f"TTS Error: {e}")
             return ""
 
+    async def _conduct_research(self, topic: str):
+        """
+        Phase 0: Pre-Show Prep.
+
+        Agents generate a 'Cheat Sheet' of facts and arguments.
+        """
+        print(f"\n[Research Phase] Agents determining strategy for: {topic}...")
+
+        research_tasks = []
+        for name, agent in self.agents.items():
+            if name == "shakti":
+                continue  # Moderator doesn't research arguments
+
+            prompt = f"""
+You are preparing for a high-stakes debate on: "{topic}".
+Based on your persona ({agent.description}), LIST the following:
+1. 3 Key Arguments you want to make.
+2. 1 Historical or Statistical Fact (cite a source, real or plausible).
+3. 1 Opening Hook/One-liner.
+
+Output CLEARLY as a bulleted list. Do not write a speech yet.
+"""
+            research_tasks.append(self._call_agent_async(agent, prompt))
+
+        # Run research in parallel
+        results = await asyncio.gather(*research_tasks)
+
+        # Store results
+        agent_names = [n for n in self.agents.keys() if n != "shakti"]
+        for name, result in zip(agent_names, results):
+            self.agent_contexts[self.agents[name].name] = result
+            print(f"   ✓ {self.agents[name].name} ready with prep notes.")
+
     async def generate_debate_stream(
         self, topic: str, turns: int = 8
     ) -> AsyncGenerator[Dict, None]:
@@ -169,6 +204,9 @@ Example: "You're talking about kids like data points! Every child needs a human 
         Yields:
             Dict events with type: 'intro', 'turn', 'conclusion'
         """
+        # 0. Pre-Show Research
+        await self._conduct_research(topic)
+
         # 1. Moderator Introduction
         intro_prompt = f"Introduce this explosive debate topic in 2 sentences: {topic}"
         intro_response = await self._call_agent_async(self.shakti, intro_prompt)
@@ -198,13 +236,22 @@ Example: "You're talking about kids like data points! Every child needs a human 
             debater_id, debater_agent = debaters[(turn - 1) % len(debaters)]
 
             # Debater responds
+            prep_notes = self.agent_contexts.get(debater_agent.name, "No prep notes.")
+
             debater_prompt = f"""
 TOPIC: {topic}
+
+YOUR PREP NOTES (RESEARCH):
+{prep_notes}
 
 DEBATE SO FAR:
 {self._format_history()}
 
-React to this debate. Attack previous speakers if relevant. Stay in character.
+INSTRUCTION:
+React to this debate.
+Use your PREP NOTES to construct a strong, well-reasoned argument.
+Attack previous speakers if relevant.
+Speak naturally (approx 3-5 sentences). Do not be brief; be convincing.
 """
 
             debater_response = await self._call_agent_async(
